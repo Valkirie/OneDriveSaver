@@ -38,21 +38,27 @@ namespace DropboxMe
             this.b_CreateProfile = new System.Windows.Forms.Button();
             this.lB_Profiles = new System.Windows.Forms.ListBox();
             this.gB_ProfileDetails = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.b_DeleteProfile = new System.Windows.Forms.Button();
             this.tB_ProfilePath = new System.Windows.Forms.TextBox();
             this.lb_ProfilePath = new System.Windows.Forms.Label();
             this.tB_ProfileName = new System.Windows.Forms.TextBox();
             this.lb_ProfileName = new System.Windows.Forms.Label();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.gB_DeviceDetails = new System.Windows.Forms.GroupBox();
-            this.treeView1 = new System.Windows.Forms.TreeView();
+            this.treeView1 = new BufferedTreeView();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
-            this.button1 = new System.Windows.Forms.Button();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.contextMenuStrip2 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.deleteFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuStrip3 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.deleteFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.gB_Profiles.SuspendLayout();
             this.gB_ProfileDetails.SuspendLayout();
             this.gB_DeviceDetails.SuspendLayout();
+            this.contextMenuStrip2.SuspendLayout();
+            this.contextMenuStrip3.SuspendLayout();
             this.SuspendLayout();
             // 
             // notifyIcon1
@@ -123,6 +129,15 @@ namespace DropboxMe
             this.gB_ProfileDetails.TabStop = false;
             this.gB_ProfileDetails.Text = "Profile Details";
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(266, 87);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(104, 23);
+            this.button1.TabIndex = 7;
+            this.button1.Text = "Apply";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
             // b_DeleteProfile
             // 
             this.b_DeleteProfile.Location = new System.Drawing.Point(156, 87);
@@ -137,7 +152,7 @@ namespace DropboxMe
             this.tB_ProfilePath.Location = new System.Drawing.Point(156, 58);
             this.tB_ProfilePath.Name = "tB_ProfilePath";
             this.tB_ProfilePath.ReadOnly = true;
-            this.tB_ProfilePath.Size = new System.Drawing.Size(344, 23);
+            this.tB_ProfilePath.Size = new System.Drawing.Size(469, 23);
             this.tB_ProfilePath.TabIndex = 5;
             // 
             // lb_ProfilePath
@@ -154,7 +169,7 @@ namespace DropboxMe
             this.tB_ProfileName.Location = new System.Drawing.Point(156, 29);
             this.tB_ProfileName.Name = "tB_ProfileName";
             this.tB_ProfileName.ReadOnly = true;
-            this.tB_ProfileName.Size = new System.Drawing.Size(222, 23);
+            this.tB_ProfileName.Size = new System.Drawing.Size(469, 23);
             this.tB_ProfileName.TabIndex = 3;
             // 
             // lb_ProfileName
@@ -183,14 +198,15 @@ namespace DropboxMe
             // treeView1
             // 
             this.treeView1.Cursor = System.Windows.Forms.Cursors.Default;
+            this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.treeView1.ImageIndex = 0;
             this.treeView1.ImageList = this.imageList1;
-            this.treeView1.Location = new System.Drawing.Point(6, 22);
+            this.treeView1.Location = new System.Drawing.Point(3, 19);
             this.treeView1.Name = "treeView1";
             this.treeView1.SelectedImageIndex = 0;
-            this.treeView1.Size = new System.Drawing.Size(975, 396);
+            this.treeView1.Size = new System.Drawing.Size(981, 403);
             this.treeView1.TabIndex = 0;
-            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
+            this.treeView1.MouseDown += treeView1_MouseDown;
             // 
             // imageList1
             // 
@@ -200,14 +216,31 @@ namespace DropboxMe
             this.imageList1.Images.SetKeyName(0, "FolderBottomPanel_16x.png");
             this.imageList1.Images.SetKeyName(1, "FileSystemDriverFile_16x.png");
             // 
-            // button1
+            // contextMenuStrip2
             // 
-            this.button1.Location = new System.Drawing.Point(266, 87);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(104, 23);
-            this.button1.TabIndex = 7;
-            this.button1.Text = "Delete profile";
-            this.button1.UseVisualStyleBackColor = true;
+            this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.deleteFolderToolStripMenuItem});
+            this.contextMenuStrip2.Name = "contextMenuStrip2";
+            this.contextMenuStrip2.Size = new System.Drawing.Size(144, 26);
+            // 
+            // deleteFolderToolStripMenuItem
+            // 
+            this.deleteFolderToolStripMenuItem.Name = "deleteFolderToolStripMenuItem";
+            this.deleteFolderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteFolderToolStripMenuItem.Text = "Delete Folder";
+            // 
+            // contextMenuStrip3
+            // 
+            this.contextMenuStrip3.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.deleteFileToolStripMenuItem});
+            this.contextMenuStrip3.Name = "contextMenuStrip3";
+            this.contextMenuStrip3.Size = new System.Drawing.Size(181, 48);
+            // 
+            // deleteFileToolStripMenuItem
+            // 
+            this.deleteFileToolStripMenuItem.Name = "deleteFileToolStripMenuItem";
+            this.deleteFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteFileToolStripMenuItem.Text = "Delete File";
             // 
             // Form1
             // 
@@ -231,6 +264,8 @@ namespace DropboxMe
             this.gB_ProfileDetails.ResumeLayout(false);
             this.gB_ProfileDetails.PerformLayout();
             this.gB_DeviceDetails.ResumeLayout(false);
+            this.contextMenuStrip2.ResumeLayout(false);
+            this.contextMenuStrip3.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -249,12 +284,16 @@ namespace DropboxMe
         private System.Windows.Forms.Label lb_ProfilePath;
         private System.Windows.Forms.TextBox tB_ProfileName;
         private System.Windows.Forms.Label lb_ProfileName;
-        private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.GroupBox gB_DeviceDetails;
-        private System.Windows.Forms.TreeView treeView1;
+        private BufferedTreeView treeView1;
         private System.Windows.Forms.ImageList imageList1;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip2;
+        private System.Windows.Forms.ToolStripMenuItem deleteFolderToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip3;
+        private System.Windows.Forms.ToolStripMenuItem deleteFileToolStripMenuItem;
     }
 }
 

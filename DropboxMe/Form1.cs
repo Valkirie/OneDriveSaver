@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -8,6 +9,7 @@ using System.Text.Json;
 using System.Windows.Forms;
 using Microsoft.VisualBasic;
 using Microsoft.Win32;
+using static DropboxMe.SymLinkHelper;
 
 namespace DropboxMe
 {
@@ -38,6 +40,9 @@ namespace DropboxMe
             BackupOnStart = Properties.Settings.Default.BackupOnStart;
             dropboxPath = File.ReadAllText(jsonPath).Split('\"')[5].Replace(@"\\", @"\");
             dropboxMePath = Path.Combine(dropboxPath, "DropboxMe");
+
+            // update environment var
+            Environment.SetEnvironmentVariable("dropboxme", dropboxMePath);
 
             Utils.SetStartup(StartOnBoot, Application.ExecutablePath);
 
@@ -136,16 +141,16 @@ namespace DropboxMe
                 treeView1.Nodes.Clear();
                 int idx = 0;
 
-                foreach (GameSettings setting in game.Settings.Values.Where(a => a.type == SymLinkHelper.SymbolicLinkType.Directory))
+                foreach (GameSettings setting in game.Settings.Values.Where(a => a.type == SymbolicLinkType.Directory))
                 {
-                    treeView1.Nodes.Add(setting.path);
-                    treeView1.Nodes[idx].ImageIndex = 0;
+                    treeView1.Nodes.Add(setting.key, setting.path, 0, 0);
+                    treeView1.Nodes[idx].Tag = setting.type;
                     int idy = 0;
 
-                    foreach (GameSettings sub_setting in game.Settings.Values.Where(a => a.type == SymLinkHelper.SymbolicLinkType.File && a.path.Contains(setting.path)))
+                    foreach (GameSettings sub_setting in game.Settings.Values.Where(a => a.type == SymbolicLinkType.File && a.path.Contains(setting.path)))
                     {
-                        treeView1.Nodes[idx].Nodes.Add(sub_setting.path);
-                        treeView1.Nodes[idx].Nodes[idy].ImageIndex = 1;
+                        treeView1.Nodes[idx].Nodes.Add(sub_setting.key, sub_setting.path, 1, 1);
+                        treeView1.Nodes[idx].Nodes[idy].Tag = sub_setting.type;
                         idy++;
                     }
 
@@ -153,10 +158,26 @@ namespace DropboxMe
                 }
             });
         }
-
-        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        
+        // Display the appropriate context menu.
+        private void treeView1_MouseDown(object sender, MouseEventArgs e)
         {
-            treeView1.SelectedImageIndex = treeView1.SelectedNode.ImageIndex;
+            // Make sure this is the right button.
+            if (e.Button != MouseButtons.Right) return;
+
+            // Select this node.
+            TreeNode node_here = treeView1.GetNodeAt(e.X, e.Y);
+            treeView1.SelectedNode = node_here;
+
+            // See if we got a node.
+            if (node_here == null) return;
+
+            // See what kind of object this is and
+            // display the appropriate popup menu.
+            if (node_here.Tag is SymbolicLinkType.Directory)
+                contextMenuStrip2.Show(treeView1, new Point(e.X, e.Y));
+            else if (node_here.Tag is SymbolicLinkType.File)
+                contextMenuStrip3.Show(treeView1, new Point(e.X, e.Y));
         }
 
         private void Form1_Load(object sender, EventArgs e)
