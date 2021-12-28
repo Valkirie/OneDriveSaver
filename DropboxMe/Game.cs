@@ -17,26 +17,52 @@ namespace DropboxMe
 
         [JsonIgnore()] public FileSystemWatcher pathWatcher { get; set; }
         [JsonIgnore()] public FileSystemWatcher symlinkWatcher { get; set; }
-        [JsonIgnore()] public Timer timer { get; set; }
 
         [JsonIgnore()] public string loc_path { get; set; }
         [JsonIgnore()] public string loc_symlink { get; set; }
         [JsonIgnore()] public bool SymbolicLink { get; set; } // dirty
+        [JsonIgnore()] public string key { get; set; }
 
         public string path { get; set; }
         public string symlink { get; set; }
         public SymbolicLinkType type { get; set; }
+        public string parent { get; set; }
+
+        public event HasChangedEventHandler HasChanged;
+        public delegate void HasChangedEventHandler(Object sender);
 
         public GameSettings()
         {
         }
 
-        public GameSettings(string _path, string _symlink, SymbolicLinkType _type)
+        public GameSettings(string _path, string _symlink, SymbolicLinkType _type, GameSettings parent = null)
         {
             path = LocalEnvironment.ContractEnvironmentVariables(_path);
             symlink = LocalEnvironment.ContractEnvironmentVariables(_symlink);
             loc_path = Environment.ExpandEnvironmentVariables(_path);
             loc_symlink = Environment.ExpandEnvironmentVariables(_symlink);
+
+            // set key
+            FileAttributes attr = FileAttributes.Directory;
+
+            if (_type == SymbolicLinkType.File)
+            {
+                if (File.Exists(loc_path))
+                    attr = File.GetAttributes(loc_path);
+            }
+            else if (_type == SymbolicLinkType.Directory)
+            {
+                if (Directory.Exists(loc_path))
+                    attr = FileAttributes.Directory;
+            }
+            else
+                return;
+
+            FileSystemInfo info = attr == FileAttributes.Directory ? new DirectoryInfo(loc_path) : new FileInfo(loc_path);
+            key = info.Name.ToLower();
+
+            if (parent != null)
+                this.parent = parent.key;
         }
 
         public void Initialize(Game _game)
@@ -48,11 +74,24 @@ namespace DropboxMe
             loc_path = Environment.ExpandEnvironmentVariables(path);
             loc_symlink = Environment.ExpandEnvironmentVariables(symlink);
 
-            // set timer
-            timer = new Timer(3000);
-            timer.Enabled = false;
-            timer.AutoReset = false;
-            timer.Elapsed += Timer_Elapsed;
+            // set key
+            FileAttributes attr = FileAttributes.Directory;
+
+            if (type == SymbolicLinkType.File)
+            {
+                if (File.Exists(loc_path))
+                    attr = File.GetAttributes(loc_path);
+            }
+            else if (type == SymbolicLinkType.Directory)
+            {
+                if (Directory.Exists(loc_path))
+                    attr = FileAttributes.Directory;
+            }
+            else
+                return;
+
+            FileSystemInfo info = attr == FileAttributes.Directory ? new DirectoryInfo(loc_path) : new FileInfo(loc_path);
+            key = info.Name.ToLower();
 
             if (type == SymbolicLinkType.Directory)
             {
@@ -70,7 +109,7 @@ namespace DropboxMe
 
                 string[] fileEntries = Directory.GetFiles(loc_path, "*.*", SearchOption.AllDirectories);
                 foreach (string fileName in fileEntries)
-                    ProcessPath(fileName);
+                    ProcessPath(fileName, this);
 
                 symlinkWatcher = new FileSystemWatcher()
                 {
@@ -83,14 +122,8 @@ namespace DropboxMe
 
                 fileEntries = Directory.GetFiles(loc_symlink, "*.*", SearchOption.AllDirectories);
                 foreach (string fileName in fileEntries)
-                    ProcessSymlink(fileName);
+                    ProcessSymlink(fileName, this);
             }
-        }
-
-        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            game.Serialize();
-            timer.Stop();
         }
 
         private void PathDeleted(object sender, FileSystemEventArgs e)
@@ -106,7 +139,7 @@ namespace DropboxMe
             if (!game.isInitialized)
                 return;
 
-            ProcessPath(e.FullPath);
+            ProcessPath(e.FullPath, this);
         }
 
         private void SymlinkDeleted(object sender, FileSystemEventArgs e)
@@ -122,7 +155,7 @@ namespace DropboxMe
             if (!game.isInitialized)
                 return;
 
-            ProcessSymlink(e.FullPath);
+            ProcessSymlink(e.FullPath, this);
         }
 
         private void RemoveSymlink(string FullPath)
@@ -147,13 +180,11 @@ namespace DropboxMe
                     File.Delete(target);
 
                 game.Settings.Remove(key);
-
-                timer.Stop();
-                timer.Start();
+                HasChanged?.Invoke(this);
             }
         }
 
-        private void ProcessSymlink(string FullPath)
+        private void ProcessSymlink(string FullPath, GameSettings parent)
         {
             string relative = Path.GetRelativePath(loc_symlink, FullPath);
             string target = Path.Combine(loc_path, relative);
@@ -162,13 +193,19 @@ namespace DropboxMe
             if (!Directory.Exists(target_folder))
                 Directory.CreateDirectory(target_folder);
 
-            // FileAttributes attr = File.GetAttributes(FullPath);
-            FileSystemInfo info = /* attr == FileAttributes.Directory ? new DirectoryInfo(FullPath) :*/ new FileInfo(FullPath);
+            FileSystemInfo info = new FileInfo(FullPath);
+            string key = info.Name.ToLower();
+
             try
             {
                 // sometimes file creation process is an obstacle to the below
                 if (((FileInfo)info).IsSymbolicLink())
+                {
+                    // force update key (temporary)
+                    if (game.Settings.ContainsKey(key))
+                        game.Settings[key].parent = parent.key;
                     return;
+                }
             }
             catch (Exception)
             { }
@@ -176,17 +213,14 @@ namespace DropboxMe
             if (game.Ignore.Contains(info.Name))
                 return;
 
-            GameSettings setting = new GameSettings(target, FullPath, info.Attributes == FileAttributes.Directory ? SymbolicLinkType.Directory : SymbolicLinkType.File);
+            GameSettings setting = new GameSettings(target, FullPath, info.Attributes == FileAttributes.Directory ? SymbolicLinkType.Directory : SymbolicLinkType.File, parent);
             setting.Initialize(game);
             setting.SetJunction();
 
-            string key = info.Name.ToLower();
             if (!game.Settings.ContainsKey(key))
             {
                 game.Settings.Add(key, setting);
-
-                timer.Stop();
-                timer.Start();
+                HasChanged?.Invoke(this);
             }
         }
 
@@ -195,10 +229,9 @@ namespace DropboxMe
             string relative = Path.GetRelativePath(loc_path, FullPath);
             string target = Path.Combine(loc_symlink, relative);
 
-            // FileAttributes attr = File.GetAttributes(FullPath);
-            FileSystemInfo info = /* attr == FileAttributes.Directory ? new DirectoryInfo(FullPath) :*/ new FileInfo(FullPath);
-
+            FileSystemInfo info = new FileInfo(FullPath);
             string key = info.Name.ToLower();
+
             if (game.Settings.ContainsKey(key))
             {
                 GameSettings setting = game.Settings[key];
@@ -212,13 +245,11 @@ namespace DropboxMe
                     File.Delete(target);
 
                 game.Settings.Remove(key);
-
-                timer.Stop();
-                timer.Start();
+                HasChanged?.Invoke(this);
             }
         }
 
-        private void ProcessPath(string FullPath)
+        private void ProcessPath(string FullPath, GameSettings parent)
         {
             string relative = Path.GetRelativePath(loc_path, FullPath);
             string target = Path.Combine(loc_symlink, relative);
@@ -229,11 +260,18 @@ namespace DropboxMe
 
             FileAttributes attr = File.GetAttributes(FullPath);
             FileSystemInfo info = attr == FileAttributes.Directory ? new DirectoryInfo(FullPath) : new FileInfo(FullPath);
+            string key = info.Name.ToLower();
+
             try
             {
                 // sometimes file creation process is an obstacle to the below
                 if (((FileInfo)info).IsSymbolicLink())
+                {
+                    // force update key (temporary)
+                    if (game.Settings.ContainsKey(key))
+                        game.Settings[key].parent = parent.key;
                     return;
+                }
             }
             catch (Exception)
             { }
@@ -241,35 +279,42 @@ namespace DropboxMe
             if (game.Ignore.Contains(info.Name))
                 return;
 
-            GameSettings setting = new GameSettings(FullPath, target, info.Attributes == FileAttributes.Directory ? SymbolicLinkType.Directory : SymbolicLinkType.File);
+            GameSettings setting = new GameSettings(FullPath, target, info.Attributes == FileAttributes.Directory ? SymbolicLinkType.Directory : SymbolicLinkType.File, parent);
             setting.SetJunction();
 
-            string key = info.Name.ToLower();
             if (!game.Settings.ContainsKey(key))
             {
                 game.Settings.Add(key, setting);
-
-                timer.Stop();
-                timer.Start();
+                HasChanged?.Invoke(this);
             }
         }
 
         public bool HasJunction()
         {
             if (type == SymbolicLinkType.File)
+            {
+                FileInfo file = new FileInfo(loc_path);
                 if (!File.Exists(loc_path))
                     return false;
-
-            if (type == SymbolicLinkType.Directory)
+                else
+                    return file.IsSymbolicLink();
+            }
+            else if (type == SymbolicLinkType.Directory)
+            {
+                DirectoryInfo dir = new DirectoryInfo(loc_path);
                 if (!Directory.Exists(loc_path))
                     return false;
-
-            DirectoryInfo dir = new DirectoryInfo(loc_path);
-            return dir.IsSymbolicLink();
+                else
+                    return dir.IsSymbolicLink();
+            }
+            return false;
         }
 
         public void SetJunction()
         {
+            if (type == SymbolicLinkType.Directory)
+                return;
+
             // do we have an existing junction already
             bool junction = HasJunction();
             if (junction)
@@ -312,6 +357,8 @@ namespace DropboxMe
         public Dictionary<string, GameSettings> Settings { get; set; } = new();
         public List<string> Ignore { get; set; } = new();
 
+        private Timer TimerSerialize;
+
         public Game(string Name, string Path)
         {
             this.Name = Name;
@@ -334,23 +381,51 @@ namespace DropboxMe
 
         public void Initialize()
         {
+            TimerSerialize = new Timer()
+            {
+                Interval = 500,
+                AutoReset = false,
+                Enabled = false
+            };
+            TimerSerialize.Elapsed += TimerSerialize_Elapsed;
+
             List<GameSettings> _settings = Settings.Values.ToList();
             for (int i = 0; i < _settings.Count; i++)
             {
                 GameSettings setting = _settings[i];
                 setting.Initialize(this);
+                setting.HasChanged += Setting_HasChanged;
             }
 
             isInitialized = true;
         }
 
+        private void TimerSerialize_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            Serialize();
+        }
+
+        private void Setting_HasChanged(object sender)
+        {
+            TimerSerialize.Stop();
+            TimerSerialize.Start();
+        }
+
         public void SetJunctions()
         {
-            foreach (GameSettings setting in Settings.Values.Where(a => a.type == SymbolicLinkType.File))
+            List<GameSettings> _settings = Settings.Values.ToList();
+            for (int i = 0; i < _settings.Count; i++)
+            {
+                GameSettings setting = _settings[i];
                 setting.SetJunction();
+            }
 
-            foreach (GameSettings setting in Settings.Values.Where(a => a.type == SymbolicLinkType.File))
+            _settings = Settings.Values.ToList();
+            for (int i = 0; i < _settings.Count; i++)
+            {
+                GameSettings setting = _settings[i];
                 setting.SymbolicLink = false;
+            }
 
             Serialize();
         }
