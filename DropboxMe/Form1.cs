@@ -44,7 +44,8 @@ namespace DropboxMe
             // update environment var
             Environment.SetEnvironmentVariable("dropboxme", dropboxMePath);
 
-            Utils.SetStartup(StartOnBoot, Application.ExecutablePath);
+            // initialize Task Manager
+            Utils.SetStartup(StartOnBoot, Application.ExecutablePath, "DropboxMe");
 
             if (!Directory.Exists(dropboxMePath))
                 Directory.CreateDirectory(dropboxMePath);
