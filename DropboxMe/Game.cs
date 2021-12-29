@@ -1,5 +1,6 @@
 ﻿using SymbolicLinkSupport;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -179,7 +180,7 @@ namespace DropboxMe
                 if (File.Exists(target) || Directory.Exists(target))
                     File.Delete(target);
 
-                game.Settings.Remove(key);
+                game.Settings.TryRemove(key, out setting);
                 HasChanged?.Invoke(this);
             }
         }
@@ -203,8 +204,10 @@ namespace DropboxMe
                 {
                     // force update key (temporary)
                     if (game.Settings.ContainsKey(key))
+                    {
                         game.Settings[key].parent = parent.key;
-                    return;
+                        return;
+                    }
                 }
             }
             catch (Exception)
@@ -215,12 +218,17 @@ namespace DropboxMe
 
             GameSettings setting = new GameSettings(target, FullPath, info.Attributes == FileAttributes.Directory ? SymbolicLinkType.Directory : SymbolicLinkType.File, parent);
             setting.Initialize(game);
-            setting.SetJunction();
+            bool success = setting.SetJunction();
 
             if (!game.Settings.ContainsKey(key))
             {
-                game.Settings.Add(key, setting);
-                HasChanged?.Invoke(this);
+                if (success)
+                {
+                    success = game.Settings.TryAdd(key, setting);
+                    if (success) HasChanged?.Invoke(this);
+                }
+                else
+                    game.Queue.Enqueue(setting);
             }
         }
 
@@ -234,17 +242,11 @@ namespace DropboxMe
 
             if (game.Settings.ContainsKey(key))
             {
-                GameSettings setting = game.Settings[key];
-                if (setting.SymbolicLink)
-                {
-                    setting.SymbolicLink = false;
-                    return;
-                }
-
                 if (File.Exists(target) || Directory.Exists(target))
                     File.Delete(target);
 
-                game.Settings.Remove(key);
+                GameSettings result;
+                game.Settings.TryRemove(key, out result);
                 HasChanged?.Invoke(this);
             }
         }
@@ -269,8 +271,10 @@ namespace DropboxMe
                 {
                     // force update key (temporary)
                     if (game.Settings.ContainsKey(key))
+                    {
                         game.Settings[key].parent = parent.key;
-                    return;
+                        return;
+                    }
                 }
             }
             catch (Exception)
@@ -280,12 +284,17 @@ namespace DropboxMe
                 return;
 
             GameSettings setting = new GameSettings(FullPath, target, info.Attributes == FileAttributes.Directory ? SymbolicLinkType.Directory : SymbolicLinkType.File, parent);
-            setting.SetJunction();
-
+            bool success = setting.SetJunction();
+            
             if (!game.Settings.ContainsKey(key))
             {
-                game.Settings.Add(key, setting);
-                HasChanged?.Invoke(this);
+                if (success)
+                {
+                    success = game.Settings.TryAdd(key, setting);
+                    if (success) HasChanged?.Invoke(this);
+                }
+                else
+                    game.Queue.Enqueue(setting);
             }
         }
 
@@ -310,24 +319,28 @@ namespace DropboxMe
             return false;
         }
 
-        public void SetJunction()
+        public bool SetJunction()
         {
             if (type == SymbolicLinkType.Directory)
-                return;
+                return true;
 
             // do we have an existing junction already
             bool junction = HasJunction();
             if (junction)
-                return; // looks like its all set already
+                return true; // looks like its all set already
 
-            bool exist_orig = File.Exists(loc_path);
-            bool exist_dest = File.Exists(loc_symlink);
             FileInfo info_orig = new FileInfo(loc_path);
             FileInfo info_dest = new FileInfo(loc_symlink);
             string key = info_orig.Name.ToLower();
 
+            // if file is being used, send it to buffer for later execution
+            if (Utils.IsFileLocked(loc_path))
+                return false;
+
+            GameSettings setting = this;
+
             // both file exists
-            if (exist_dest && exist_orig)
+            if (info_dest.Exists && info_orig.Exists)
             {
                 // game settings are more recent
                 if (info_orig.LastWriteTime > info_dest.LastWriteTime)
@@ -336,13 +349,13 @@ namespace DropboxMe
                     File.Delete(loc_path);
             }
             // missing dest
-            else if (!exist_dest && exist_orig)
+            else if (!info_dest.Exists && info_orig.Exists)
                 File.Move(loc_path, loc_symlink, true);
             else if (game.Settings.ContainsKey(key))
-                game.Settings.Remove(key);
+                game.Settings.TryRemove(key, out setting);
 
             SymbolicLink = true;
-            CreateSymbolicLink(loc_path, loc_symlink, type);
+            return CreateSymbolicLink(loc_path, loc_symlink, type);
         }
     }
 
@@ -354,10 +367,13 @@ namespace DropboxMe
 
         public string Name { get; set; }
 
-        public Dictionary<string, GameSettings> Settings { get; set; } = new();
+        [JsonIgnore()] public ConcurrentQueue<GameSettings> Queue = new();
+        public ConcurrentDictionary<string, GameSettings> Settings { get; set; } = new();
+
         public List<string> Ignore { get; set; } = new();
 
-        private Timer TimerSerialize;
+        [JsonIgnore()] private Timer queue_timer;
+        [JsonIgnore()] private Timer serialize_timer;
 
         public Game(string Name, string Path)
         {
@@ -381,13 +397,12 @@ namespace DropboxMe
 
         public void Initialize()
         {
-            TimerSerialize = new Timer()
-            {
-                Interval = 500,
-                AutoReset = false,
-                Enabled = false
-            };
-            TimerSerialize.Elapsed += TimerSerialize_Elapsed;
+            // monitors settings queu
+            queue_timer = new Timer(1000) { Enabled = true, AutoReset = true };
+            queue_timer.Elapsed += TryQueue;
+
+            serialize_timer = new Timer(500) { Enabled = false, AutoReset = false };
+            serialize_timer.Elapsed += TimerSerialize_Elapsed;
 
             List<GameSettings> _settings = Settings.Values.ToList();
             for (int i = 0; i < _settings.Count; i++)
@@ -400,6 +415,25 @@ namespace DropboxMe
             isInitialized = true;
         }
 
+        private void TryQueue(object sender, ElapsedEventArgs e)
+        {
+            foreach (GameSettings setting in Queue)
+            {
+                bool success = setting.SetJunction();
+
+                if (success)
+                {
+                    GameSettings result;
+                    success = Queue.TryDequeue(out result);
+                    if (success)
+                    {
+                        success = Settings.TryAdd(setting.key, setting);
+                        if (success) Setting_HasChanged(setting);
+                    }
+                }
+            }
+        }
+
         private void TimerSerialize_Elapsed(object sender, ElapsedEventArgs e)
         {
             Serialize();
@@ -407,8 +441,8 @@ namespace DropboxMe
 
         private void Setting_HasChanged(object sender)
         {
-            TimerSerialize.Stop();
-            TimerSerialize.Start();
+            serialize_timer.Stop();
+            serialize_timer.Start();
         }
 
         public void SetJunctions()
@@ -417,7 +451,13 @@ namespace DropboxMe
             for (int i = 0; i < _settings.Count; i++)
             {
                 GameSettings setting = _settings[i];
-                setting.SetJunction();
+                bool success = setting.SetJunction();
+
+                if (!success)
+                {
+                    Settings.TryRemove(setting.key, out setting);
+                    Queue.Enqueue(setting);
+                }
             }
 
             _settings = Settings.Values.ToList();

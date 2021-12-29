@@ -6,13 +6,13 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32.TaskScheduler;
 using Task = Microsoft.Win32.TaskScheduler.Task;
+using System.IO;
 
 namespace DropboxMe
 {
     class Utils
     {
         public static Task CurrentTask;
-
         public static void SetStartup(bool OnStartup, string ExecutablePath, string CurrentTaskName)
         {
             TaskService TaskServ = new TaskService();
@@ -30,6 +30,19 @@ namespace DropboxMe
             CurrentTask = TaskService.Instance.RootFolder.RegisterTaskDefinition(CurrentTaskName, td);
 
             CurrentTask.Enabled = OnStartup;
+        }
+
+        public static bool IsFileLocked(string file)
+        {
+            try
+            {
+                using (var stream = File.OpenRead(file))
+                    return false;
+            }
+            catch (IOException)
+            {
+                return true;
+            }
         }
     }
 }
