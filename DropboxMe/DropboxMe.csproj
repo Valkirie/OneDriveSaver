@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="SymbolicLinkSupport" Version="1.2.0" />
+    <PackageReference Include="TaskScheduler" Version="2.9.3" />
   </ItemGroup>
 
   <ItemGroup>

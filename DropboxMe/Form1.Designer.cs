@@ -35,8 +35,8 @@ namespace DropboxMe
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.gB_Profiles = new System.Windows.Forms.GroupBox();
-            this.b_CreateProfile = new System.Windows.Forms.Button();
             this.lB_Profiles = new System.Windows.Forms.ListBox();
+            this.b_CreateProfile = new System.Windows.Forms.Button();
             this.gB_ProfileDetails = new System.Windows.Forms.GroupBox();
             this.button1 = new System.Windows.Forms.Button();
             this.b_DeleteProfile = new System.Windows.Forms.Button();
@@ -46,7 +46,7 @@ namespace DropboxMe
             this.lb_ProfileName = new System.Windows.Forms.Label();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.gB_DeviceDetails = new System.Windows.Forms.GroupBox();
-            this.treeView1 = new BufferedTreeView();
+            this.treeView1 = new DropboxMe.BufferedTreeView();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.contextMenuStrip2 = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -85,34 +85,37 @@ namespace DropboxMe
             // 
             // gB_Profiles
             // 
-            this.gB_Profiles.Controls.Add(this.b_CreateProfile);
             this.gB_Profiles.Controls.Add(this.lB_Profiles);
-            this.gB_Profiles.Location = new System.Drawing.Point(12, 12);
+            this.gB_Profiles.Controls.Add(this.b_CreateProfile);
+            this.gB_Profiles.Dock = System.Windows.Forms.DockStyle.Left;
+            this.gB_Profiles.Location = new System.Drawing.Point(0, 0);
             this.gB_Profiles.Name = "gB_Profiles";
-            this.gB_Profiles.Size = new System.Drawing.Size(240, 552);
+            this.gB_Profiles.Size = new System.Drawing.Size(240, 396);
             this.gB_Profiles.TabIndex = 1;
             this.gB_Profiles.TabStop = false;
             this.gB_Profiles.Text = "Profiles";
             // 
+            // lB_Profiles
+            // 
+            this.lB_Profiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lB_Profiles.FormattingEnabled = true;
+            this.lB_Profiles.ItemHeight = 15;
+            this.lB_Profiles.Location = new System.Drawing.Point(3, 19);
+            this.lB_Profiles.Name = "lB_Profiles";
+            this.lB_Profiles.Size = new System.Drawing.Size(234, 349);
+            this.lB_Profiles.TabIndex = 0;
+            this.lB_Profiles.SelectedIndexChanged += new System.EventHandler(this.lB_Profiles_SelectedIndexChanged);
+            // 
             // b_CreateProfile
             // 
-            this.b_CreateProfile.Location = new System.Drawing.Point(6, 522);
+            this.b_CreateProfile.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.b_CreateProfile.Location = new System.Drawing.Point(3, 368);
             this.b_CreateProfile.Name = "b_CreateProfile";
-            this.b_CreateProfile.Size = new System.Drawing.Size(228, 23);
+            this.b_CreateProfile.Size = new System.Drawing.Size(234, 25);
             this.b_CreateProfile.TabIndex = 1;
             this.b_CreateProfile.Text = "Create new profile";
             this.b_CreateProfile.UseVisualStyleBackColor = true;
             this.b_CreateProfile.Click += new System.EventHandler(this.b_CreateProfile_Click);
-            // 
-            // lB_Profiles
-            // 
-            this.lB_Profiles.FormattingEnabled = true;
-            this.lB_Profiles.ItemHeight = 15;
-            this.lB_Profiles.Location = new System.Drawing.Point(6, 32);
-            this.lB_Profiles.Name = "lB_Profiles";
-            this.lB_Profiles.Size = new System.Drawing.Size(228, 484);
-            this.lB_Profiles.TabIndex = 0;
-            this.lB_Profiles.SelectedIndexChanged += new System.EventHandler(this.lB_Profiles_SelectedIndexChanged);
             // 
             // gB_ProfileDetails
             // 
@@ -122,15 +125,17 @@ namespace DropboxMe
             this.gB_ProfileDetails.Controls.Add(this.lb_ProfilePath);
             this.gB_ProfileDetails.Controls.Add(this.tB_ProfileName);
             this.gB_ProfileDetails.Controls.Add(this.lb_ProfileName);
-            this.gB_ProfileDetails.Location = new System.Drawing.Point(258, 12);
+            this.gB_ProfileDetails.Dock = System.Windows.Forms.DockStyle.Top;
+            this.gB_ProfileDetails.Location = new System.Drawing.Point(240, 0);
             this.gB_ProfileDetails.Name = "gB_ProfileDetails";
-            this.gB_ProfileDetails.Size = new System.Drawing.Size(987, 121);
+            this.gB_ProfileDetails.Size = new System.Drawing.Size(533, 119);
             this.gB_ProfileDetails.TabIndex = 2;
             this.gB_ProfileDetails.TabStop = false;
             this.gB_ProfileDetails.Text = "Profile Details";
             // 
             // button1
             // 
+            this.button1.Enabled = false;
             this.button1.Location = new System.Drawing.Point(266, 87);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(104, 23);
@@ -140,6 +145,7 @@ namespace DropboxMe
             // 
             // b_DeleteProfile
             // 
+            this.b_DeleteProfile.Enabled = false;
             this.b_DeleteProfile.Location = new System.Drawing.Point(156, 87);
             this.b_DeleteProfile.Name = "b_DeleteProfile";
             this.b_DeleteProfile.Size = new System.Drawing.Size(104, 23);
@@ -149,10 +155,12 @@ namespace DropboxMe
             // 
             // tB_ProfilePath
             // 
+            this.tB_ProfilePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tB_ProfilePath.Location = new System.Drawing.Point(156, 58);
             this.tB_ProfilePath.Name = "tB_ProfilePath";
             this.tB_ProfilePath.ReadOnly = true;
-            this.tB_ProfilePath.Size = new System.Drawing.Size(469, 23);
+            this.tB_ProfilePath.Size = new System.Drawing.Size(365, 23);
             this.tB_ProfilePath.TabIndex = 5;
             // 
             // lb_ProfilePath
@@ -166,10 +174,12 @@ namespace DropboxMe
             // 
             // tB_ProfileName
             // 
+            this.tB_ProfileName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tB_ProfileName.Location = new System.Drawing.Point(156, 29);
             this.tB_ProfileName.Name = "tB_ProfileName";
             this.tB_ProfileName.ReadOnly = true;
-            this.tB_ProfileName.Size = new System.Drawing.Size(469, 23);
+            this.tB_ProfileName.Size = new System.Drawing.Size(365, 23);
             this.tB_ProfileName.TabIndex = 3;
             // 
             // lb_ProfileName
@@ -188,9 +198,10 @@ namespace DropboxMe
             // gB_DeviceDetails
             // 
             this.gB_DeviceDetails.Controls.Add(this.treeView1);
-            this.gB_DeviceDetails.Location = new System.Drawing.Point(258, 139);
+            this.gB_DeviceDetails.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gB_DeviceDetails.Location = new System.Drawing.Point(240, 119);
             this.gB_DeviceDetails.Name = "gB_DeviceDetails";
-            this.gB_DeviceDetails.Size = new System.Drawing.Size(987, 425);
+            this.gB_DeviceDetails.Size = new System.Drawing.Size(533, 277);
             this.gB_DeviceDetails.TabIndex = 4;
             this.gB_DeviceDetails.TabStop = false;
             this.gB_DeviceDetails.Text = "Profile Settings";
@@ -204,9 +215,8 @@ namespace DropboxMe
             this.treeView1.Location = new System.Drawing.Point(3, 19);
             this.treeView1.Name = "treeView1";
             this.treeView1.SelectedImageIndex = 0;
-            this.treeView1.Size = new System.Drawing.Size(981, 403);
+            this.treeView1.Size = new System.Drawing.Size(527, 255);
             this.treeView1.TabIndex = 0;
-            this.treeView1.MouseDown += treeView1_MouseDown;
             // 
             // imageList1
             // 
@@ -226,7 +236,7 @@ namespace DropboxMe
             // deleteFolderToolStripMenuItem
             // 
             this.deleteFolderToolStripMenuItem.Name = "deleteFolderToolStripMenuItem";
-            this.deleteFolderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteFolderToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
             this.deleteFolderToolStripMenuItem.Text = "Delete Folder";
             // 
             // contextMenuStrip3
@@ -234,19 +244,19 @@ namespace DropboxMe
             this.contextMenuStrip3.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.deleteFileToolStripMenuItem});
             this.contextMenuStrip3.Name = "contextMenuStrip3";
-            this.contextMenuStrip3.Size = new System.Drawing.Size(181, 48);
+            this.contextMenuStrip3.Size = new System.Drawing.Size(129, 26);
             // 
             // deleteFileToolStripMenuItem
             // 
             this.deleteFileToolStripMenuItem.Name = "deleteFileToolStripMenuItem";
-            this.deleteFileToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.deleteFileToolStripMenuItem.Size = new System.Drawing.Size(128, 22);
             this.deleteFileToolStripMenuItem.Text = "Delete File";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1257, 572);
+            this.ClientSize = new System.Drawing.Size(773, 396);
             this.Controls.Add(this.gB_DeviceDetails);
             this.Controls.Add(this.gB_ProfileDetails);
             this.Controls.Add(this.gB_Profiles);
