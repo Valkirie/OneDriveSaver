@@ -148,7 +148,7 @@ namespace DropboxMe
                     treeView1.Nodes[idx].Tag = setting.type;
                     int idy = 0;
 
-                    foreach (GameSettings sub_setting in game.Settings.Values.Where(a => a.type == SymbolicLinkType.File && a.path.Contains(setting.path)))
+                    foreach (GameSettings sub_setting in game.Settings.Values.Where(a => a.type == SymbolicLinkType.File && a.parent == setting.key))
                     {
                         treeView1.Nodes[idx].Nodes.Add(sub_setting.key, sub_setting.path, 1, 1);
                         treeView1.Nodes[idx].Nodes[idy].Tag = sub_setting.type;
