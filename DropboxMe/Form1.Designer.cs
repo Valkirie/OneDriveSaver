@@ -35,7 +35,7 @@ namespace DropboxMe
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.gB_Profiles = new System.Windows.Forms.GroupBox();
-            this.lB_Profiles = new System.Windows.Forms.ListBox();
+            this.lB_Games = new System.Windows.Forms.ListBox();
             this.b_CreateProfile = new System.Windows.Forms.Button();
             this.gB_ProfileDetails = new System.Windows.Forms.GroupBox();
             this.button1 = new System.Windows.Forms.Button();
@@ -85,7 +85,7 @@ namespace DropboxMe
             // 
             // gB_Profiles
             // 
-            this.gB_Profiles.Controls.Add(this.lB_Profiles);
+            this.gB_Profiles.Controls.Add(this.lB_Games);
             this.gB_Profiles.Controls.Add(this.b_CreateProfile);
             this.gB_Profiles.Dock = System.Windows.Forms.DockStyle.Left;
             this.gB_Profiles.Location = new System.Drawing.Point(0, 0);
@@ -95,16 +95,16 @@ namespace DropboxMe
             this.gB_Profiles.TabStop = false;
             this.gB_Profiles.Text = "Profiles";
             // 
-            // lB_Profiles
+            // lB_Games
             // 
-            this.lB_Profiles.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lB_Profiles.FormattingEnabled = true;
-            this.lB_Profiles.ItemHeight = 15;
-            this.lB_Profiles.Location = new System.Drawing.Point(3, 19);
-            this.lB_Profiles.Name = "lB_Profiles";
-            this.lB_Profiles.Size = new System.Drawing.Size(234, 349);
-            this.lB_Profiles.TabIndex = 0;
-            this.lB_Profiles.SelectedIndexChanged += new System.EventHandler(this.lB_Profiles_SelectedIndexChanged);
+            this.lB_Games.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lB_Games.FormattingEnabled = true;
+            this.lB_Games.ItemHeight = 15;
+            this.lB_Games.Location = new System.Drawing.Point(3, 19);
+            this.lB_Games.Name = "lB_Games";
+            this.lB_Games.Size = new System.Drawing.Size(234, 349);
+            this.lB_Games.TabIndex = 0;
+            this.lB_Games.SelectedIndexChanged += new System.EventHandler(this.lB_Games_SelectedIndexChanged);
             // 
             // b_CreateProfile
             // 
@@ -142,6 +142,7 @@ namespace DropboxMe
             this.button1.TabIndex = 7;
             this.button1.Text = "Apply";
             this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // b_DeleteProfile
             // 
@@ -152,6 +153,7 @@ namespace DropboxMe
             this.b_DeleteProfile.TabIndex = 6;
             this.b_DeleteProfile.Text = "Delete profile";
             this.b_DeleteProfile.UseVisualStyleBackColor = true;
+            this.b_DeleteProfile.Click += new System.EventHandler(this.b_DeleteProfile_Click);
             // 
             // tB_ProfilePath
             // 
@@ -287,7 +289,7 @@ namespace DropboxMe
         private System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem;
         private System.Windows.Forms.GroupBox gB_Profiles;
         private System.Windows.Forms.Button b_CreateProfile;
-        private System.Windows.Forms.ListBox lB_Profiles;
+        private System.Windows.Forms.ListBox lB_Games;
         private System.Windows.Forms.GroupBox gB_ProfileDetails;
         private System.Windows.Forms.Button b_DeleteProfile;
         private System.Windows.Forms.TextBox tB_ProfilePath;

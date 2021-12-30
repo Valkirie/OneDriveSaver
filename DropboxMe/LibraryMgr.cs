@@ -10,7 +10,7 @@ namespace DropboxMe
 {
     class LibraryMgr
     {
-        public Dictionary<string, Game> profiles = new();
+        public Dictionary<string, Game> games = new();
         private Dictionary<string, DateTime> dateTimeDictionary = new();
 
         private Form1 form;
@@ -28,11 +28,11 @@ namespace DropboxMe
                 if (!File.Exists(settingsPath))
                     continue; // game has broken settings
 
-                ProcessProfile(settingsPath);
+                ProcessGame(settingsPath);
             }
         }
 
-        private void ProcessProfile(string fileName)
+        private void ProcessGame(string fileName)
         {
             Game game = null;
 
@@ -48,14 +48,14 @@ namespace DropboxMe
             if (game == null || game.Name == null)
                 return;
 
-            if (profiles.ContainsKey(game.Name) && profiles[game.Name].GetHashCode() == game.GetHashCode())
+            if (games.ContainsKey(game.Name) && games[game.Name].GetHashCode() == game.GetHashCode())
                 return;
 
-            profiles[game.Name] = game;
+            games[game.Name] = game;
             game.Initialize();
             game.SetJunctions();
 
-            form.UpdateList(game);
+            form.UpdateList(game.Name);
         }
 
         internal void SerializeGame(Game game)

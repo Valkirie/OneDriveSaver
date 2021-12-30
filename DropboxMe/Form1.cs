@@ -79,13 +79,19 @@ namespace DropboxMe
              */
         }
 
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // initialize library manager
+            manager = new LibraryMgr(this, dropboxMePath);
+        }
+
         #region UI
 
-        public void UpdateList(Game game)
+        public void UpdateList(string game)
         {
             this.BeginInvoke((MethodInvoker)delegate ()
             {
-                lB_Profiles.Items.Add(game);
+                lB_Games.Items.Add(game);
             });
         }
 
@@ -117,19 +123,19 @@ namespace DropboxMe
             if (name == null)
                 return;
 
-            if (manager.profiles.ContainsKey(name))
+            if (manager.games.ContainsKey(name))
                 return;
 
             string filename = Path.Combine(dropboxMePath, name, "Settings.json");
 
             Game game = new Game(name, filename);
-            manager.profiles[name] = game;
+            manager.games[name] = game;
             game.Serialize();
         }
 
-        private void lB_Profiles_SelectedIndexChanged(object sender, EventArgs e)
+        private void lB_Games_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Game game = (Game)lB_Profiles.SelectedItem;
+            Game game = manager.games[(string)lB_Games.SelectedItem];
 
             if (game == null)
                 return;
@@ -140,22 +146,26 @@ namespace DropboxMe
                 tB_ProfilePath.Text = game.Path;
 
                 treeView1.Nodes.Clear();
-                int idx = 0;
 
-                foreach (GameSettings setting in game.Settings.Values.Where(a => a.type == SymbolicLinkType.Directory))
+                var directories = game.Settings.Values.Where(a => a.type == SymbolicLinkType.Directory);
+                int idx_directory = 0;
+
+                foreach (GameSettings setting in directories)
                 {
                     treeView1.Nodes.Add(setting.key, setting.path, 0, 0);
-                    treeView1.Nodes[idx].Tag = setting.type;
-                    int idy = 0;
+                    treeView1.Nodes[idx_directory].Tag = setting.type;
 
-                    foreach (GameSettings sub_setting in game.Settings.Values.Where(a => a.type == SymbolicLinkType.File && a.parent == setting.key))
+                    var files = game.Settings.Values.Where(a => a.type == SymbolicLinkType.File && a.parent == setting.key);
+                    int idx_files = 0;
+
+                    foreach (GameSettings sub_setting in files)
                     {
-                        treeView1.Nodes[idx].Nodes.Add(sub_setting.key, sub_setting.path, 1, 1);
-                        treeView1.Nodes[idx].Nodes[idy].Tag = sub_setting.type;
-                        idy++;
+                        treeView1.Nodes[idx_directory].Nodes.Add(sub_setting.key, sub_setting.path, 1, 1);
+                        treeView1.Nodes[idx_directory].Nodes[idx_files].Tag = sub_setting.type;
+                        idx_files++;
                     }
 
-                    idx++;
+                    idx_directory++;
                 }
             });
         }
@@ -181,10 +191,14 @@ namespace DropboxMe
                 contextMenuStrip3.Show(treeView1, new Point(e.X, e.Y));
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void b_DeleteProfile_Click(object sender, EventArgs e)
         {
-            // initialize library manager
-            manager = new LibraryMgr(this, dropboxMePath);
+            throw new NotImplementedException();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)

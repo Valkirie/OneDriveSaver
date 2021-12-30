@@ -29,8 +29,11 @@ namespace DropboxMe
         public SymbolicLinkType type { get; set; }
         public string parent { get; set; }
 
-        public event HasChangedEventHandler HasChanged;
+        public event HasChangedEventHandler Changed;
         public delegate void HasChangedEventHandler(Object sender);
+
+        public event HasQueuedEventHandler Queued;
+        public delegate void HasQueuedEventHandler(Object sender);
 
         public GameSettings()
         {
@@ -181,7 +184,7 @@ namespace DropboxMe
                     File.Delete(target);
 
                 game.Settings.TryRemove(key, out setting);
-                HasChanged?.Invoke(this);
+                Changed?.Invoke(this);
             }
         }
 
@@ -225,10 +228,13 @@ namespace DropboxMe
                 if (success)
                 {
                     success = game.Settings.TryAdd(key, setting);
-                    if (success) HasChanged?.Invoke(this);
+                    if (success) Changed?.Invoke(this);
                 }
                 else
+                {
                     game.Queue.Enqueue(setting);
+                    Queued?.Invoke(this);
+                }
             }
         }
 
@@ -247,7 +253,7 @@ namespace DropboxMe
 
                 GameSettings result;
                 game.Settings.TryRemove(key, out result);
-                HasChanged?.Invoke(this);
+                Changed?.Invoke(this);
             }
         }
 
@@ -291,10 +297,13 @@ namespace DropboxMe
                 if (success)
                 {
                     success = game.Settings.TryAdd(key, setting);
-                    if (success) HasChanged?.Invoke(this);
+                    if (success) Changed?.Invoke(this);
                 }
                 else
+                {
                     game.Queue.Enqueue(setting);
+                    Queued?.Invoke(this);
+                }
             }
         }
 
@@ -398,8 +407,8 @@ namespace DropboxMe
         public void Initialize()
         {
             // monitors settings queu
-            queue_timer = new Timer(1000) { Enabled = true, AutoReset = true };
-            queue_timer.Elapsed += TryQueue;
+            queue_timer = new Timer(500) { Enabled = false, AutoReset = true };
+            queue_timer.Elapsed += TimerQueue_Elapsed;
 
             serialize_timer = new Timer(500) { Enabled = false, AutoReset = false };
             serialize_timer.Elapsed += TimerSerialize_Elapsed;
@@ -409,13 +418,14 @@ namespace DropboxMe
             {
                 GameSettings setting = _settings[i];
                 setting.Initialize(this);
-                setting.HasChanged += Setting_HasChanged;
+                setting.Changed += SettingChanged;
+                setting.Queued += SettingQueued;
             }
 
             isInitialized = true;
         }
 
-        private void TryQueue(object sender, ElapsedEventArgs e)
+        private void TimerQueue_Elapsed(object sender, ElapsedEventArgs e)
         {
             foreach (GameSettings setting in Queue)
             {
@@ -428,10 +438,14 @@ namespace DropboxMe
                     if (success)
                     {
                         success = Settings.TryAdd(setting.key, setting);
-                        if (success) Setting_HasChanged(setting);
+                        if (success) SettingChanged(setting);
                     }
                 }
             }
+
+            // stop the timer if queue is empty
+            if (Queue.Count == 0)
+                queue_timer.Stop();
         }
 
         private void TimerSerialize_Elapsed(object sender, ElapsedEventArgs e)
@@ -439,8 +453,16 @@ namespace DropboxMe
             Serialize();
         }
 
-        private void Setting_HasChanged(object sender)
+        private void SettingQueued(object sender)
         {
+            // inform game at least one setting is in queue to get symlinked
+            queue_timer.Stop();
+            queue_timer.Start();
+        }
+
+        private void SettingChanged(object sender)
+        {
+            // inform game at least one setting has been updated and game should be serialized
             serialize_timer.Stop();
             serialize_timer.Start();
         }
@@ -457,6 +479,7 @@ namespace DropboxMe
                 {
                     Settings.TryRemove(setting.key, out setting);
                     Queue.Enqueue(setting);
+                    SettingQueued(setting);
                 }
             }
 
