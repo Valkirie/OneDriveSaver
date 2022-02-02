@@ -1,62 +1,58 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Text.Json;
 using System.Windows.Forms;
-using Microsoft.VisualBasic;
-using Microsoft.Win32;
-using static DropboxMe.SymLinkHelper;
+using static OneDriveSaver.SymLinkHelper;
 
-namespace DropboxMe
+namespace OneDriveSaver
 {
     public partial class Form1 : Form
     {
-        private string dropboxPath, dropboxMePath;
+        private string onedrivePath, onedrivesavePath;
         private bool StartOnBoot, BackupOnStart;
-        LibraryMgr manager;
+        private LibraryMgr libManager;
 
         public Form1()
         {
             InitializeComponent();
 
-            // check if Dropbox is installed
-            string infoPath = @"Dropbox\info.json";
-            string jsonPath = Path.Combine(Environment.GetEnvironmentVariable("LocalAppData"), infoPath);
-            if (!File.Exists(jsonPath))
-                jsonPath = Path.Combine(Environment.GetEnvironmentVariable("AppData"), infoPath);
+            // check if onedrive is installed
+            onedrivePath = Environment.GetEnvironmentVariable("OneDriveConsumer");
 
-            if (!File.Exists(jsonPath))
+            if (!Directory.Exists(onedrivePath))
             {
-                MessageBox.Show("Dropbox could not be found!");
+                MessageBox.Show("OneDrive could not be found!");
                 Application.Exit();
             }
 
             // settings
             StartOnBoot = Properties.Settings.Default.StartOnBoot;
             BackupOnStart = Properties.Settings.Default.BackupOnStart;
-            dropboxPath = File.ReadAllText(jsonPath).Split('\"')[5].Replace(@"\\", @"\");
-            dropboxMePath = Path.Combine(dropboxPath, "DropboxMe");
+            onedrivesavePath = Path.Combine(onedrivePath, "Saved Games");
 
             // update environment var
-            Environment.SetEnvironmentVariable("dropboxme", dropboxMePath);
+            Environment.SetEnvironmentVariable("OneDriveSavedGames", onedrivesavePath);
 
             // initialize Task Manager
-            Utils.SetStartup(StartOnBoot, Application.ExecutablePath, "DropboxMe");
+            Utils.SetStartup(StartOnBoot, Application.ExecutablePath, "OneDriveSavedGames");
 
-            if (!Directory.Exists(dropboxMePath))
-                Directory.CreateDirectory(dropboxMePath);
+            if (!Directory.Exists(onedrivesavePath))
+                Directory.CreateDirectory(onedrivesavePath);
 
             if (BackupOnStart)
             {
                 DateTime localDate = DateTime.Now;
-                string filename = $"DropboxMe-backup-{localDate.ToString("dd-MM-yyyy")}.zip";
-                if (!File.Exists($"{dropboxPath}\\{filename}"))
-                    ZipFile.CreateFromDirectory(dropboxMePath, $"{dropboxPath}\\{filename}");
+                string filename = $"SavedGames-{localDate.ToString("dd-MM-yyyy")}.zip";
+                if (!File.Exists($"{onedrivePath}\\{filename}"))
+                    ZipFile.CreateFromDirectory(onedrivesavePath, $"{onedrivePath}\\{filename}");
             }
+
+            // initialize library manager
+            libManager = new LibraryMgr(onedrivesavePath);
+            libManager.Updated += UpdateList;
 
             /*
              * Dictionary<string, GameSettings> testsettings = new();                
@@ -81,13 +77,12 @@ namespace DropboxMe
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            // initialize library manager
-            manager = new LibraryMgr(this, dropboxMePath);
+            libManager.Process();
         }
 
         #region UI
 
-        public void UpdateList(string game)
+        public void UpdateList(Game game)
         {
             this.BeginInvoke((MethodInvoker)delegate ()
             {
@@ -118,49 +113,41 @@ namespace DropboxMe
 
         private void b_CreateProfile_Click(object sender, EventArgs e)
         {
-            string name = Interaction.InputBox("Please type the name of your game", "Create a new game profile", null, 0, 0);
-
-            if (name == null)
-                return;
-
-            if (manager.games.ContainsKey(name))
-                return;
-
-            string filename = Path.Combine(dropboxMePath, name, "Settings.json");
-
-            Game game = new Game(name, filename);
-            manager.games[name] = game;
-            game.Serialize();
+            // IMPLEMENT ME !
+            return;
         }
 
         private void lB_Games_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Game game = manager.games[(string)lB_Games.SelectedItem];
-
+            Game game = (Game)lB_Games.SelectedItem;
             if (game == null)
                 return;
 
             this.BeginInvoke((MethodInvoker)delegate ()
             {
                 tB_ProfileName.Text = game.Name;
-                tB_ProfilePath.Text = game.Path;
+                tB_ProfilePath.Text = game.m_Path;
 
                 treeView1.Nodes.Clear();
 
-                var directories = game.Settings.Values.Where(a => a.type == SymbolicLinkType.Directory);
+                IEnumerable<KeyValuePair<string, GameSettings>> directories = game.Settings.Where(a => a.Value.type == SymbolicLinkType.AllDirectories);
                 int idx_directory = 0;
 
-                foreach (GameSettings setting in directories)
+                foreach (KeyValuePair<string, GameSettings> pair in directories)
                 {
-                    treeView1.Nodes.Add(setting.key, setting.path, 0, 0);
+                    GameSettings setting = pair.Value;
+
+                    treeView1.Nodes.Add(setting.fileName, setting.path, (int)setting.type, (int)setting.type);
                     treeView1.Nodes[idx_directory].Tag = setting.type;
 
-                    var files = game.Settings.Values.Where(a => a.type == SymbolicLinkType.File && a.parent == setting.key);
+                    IEnumerable<KeyValuePair<string, GameSettings>> files = game.Settings.Where(a => a.Value.type == SymbolicLinkType.File && a.Value.parent == setting.fileName);
                     int idx_files = 0;
 
-                    foreach (GameSettings sub_setting in files)
+                    foreach (KeyValuePair<string, GameSettings> sub_pair in files)
                     {
-                        treeView1.Nodes[idx_directory].Nodes.Add(sub_setting.key, sub_setting.path, 1, 1);
+                        GameSettings sub_setting = sub_pair.Value;
+
+                        treeView1.Nodes[idx_directory].Nodes.Add(sub_setting.fileName, sub_setting.path, (int)sub_setting.type, (int)sub_setting.type);
                         treeView1.Nodes[idx_directory].Nodes[idx_files].Tag = sub_setting.type;
                         idx_files++;
                     }
@@ -169,7 +156,7 @@ namespace DropboxMe
                 }
             });
         }
-        
+
         // Display the appropriate context menu.
         private void treeView1_MouseDown(object sender, MouseEventArgs e)
         {
@@ -185,7 +172,7 @@ namespace DropboxMe
 
             // See what kind of object this is and
             // display the appropriate popup menu.
-            if (node_here.Tag is SymbolicLinkType.Directory)
+            if (node_here.Tag is SymbolicLinkType.AllDirectories || node_here.Tag is SymbolicLinkType.TopDirectoryOnly)
                 contextMenuStrip2.Show(treeView1, new Point(e.X, e.Y));
             else if (node_here.Tag is SymbolicLinkType.File)
                 contextMenuStrip3.Show(treeView1, new Point(e.X, e.Y));

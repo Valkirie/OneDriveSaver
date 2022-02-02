@@ -1,26 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace DropboxMe
+namespace OneDriveSaver
 {
     class LibraryMgr
     {
-        public Dictionary<string, Game> games = new();
-        private Dictionary<string, DateTime> dateTimeDictionary = new();
+        public Dictionary<string, Game> games = new Dictionary<string, Game>(StringComparer.InvariantCultureIgnoreCase);
+        private string path;
 
-        private Form1 form;
+        public event HasUpdatedEventHandler Updated;
+        public delegate void HasUpdatedEventHandler(Game sender);
 
-        public FileSystemWatcher profileWatcher { get; set; }
-
-        public LibraryMgr(Form1 form, string path)
+        public LibraryMgr(string path)
         {
-            this.form = form;
+            this.path = path;
+        }
 
+        public void Process()
+        {
             string[] dirs = Directory.GetDirectories(path, "*", SearchOption.TopDirectoryOnly);
             foreach (string directory in dirs)
             {
@@ -40,22 +39,23 @@ namespace DropboxMe
             {
                 string outputraw = File.ReadAllText(fileName);
                 game = JsonSerializer.Deserialize<Game>(outputraw);
-                game.Path = fileName;
+                game.m_Path = fileName;
             }
-            catch (Exception ex) { }
+            catch (Exception ex)
+            {
+            }
 
             // failed to parse
             if (game == null || game.Name == null)
                 return;
 
-            if (games.ContainsKey(game.Name) && games[game.Name].GetHashCode() == game.GetHashCode())
+            if (games.ContainsKey(game.Name))
                 return;
 
             games[game.Name] = game;
             game.Initialize();
-            game.SetJunctions();
 
-            form.UpdateList(game.Name);
+            Updated?.Invoke(game);
         }
 
         internal void SerializeGame(Game game)

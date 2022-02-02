@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Security.Principal;
 using System.Windows.Forms;
 
-namespace DropboxMe
+namespace OneDriveSaver
 {
     static class Program
     {

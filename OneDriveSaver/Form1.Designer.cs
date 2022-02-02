@@ -1,5 +1,5 @@
 ﻿
-namespace DropboxMe
+namespace OneDriveSaver
 {
     partial class Form1
     {
@@ -46,7 +46,7 @@ namespace DropboxMe
             this.lb_ProfileName = new System.Windows.Forms.Label();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.gB_DeviceDetails = new System.Windows.Forms.GroupBox();
-            this.treeView1 = new DropboxMe.BufferedTreeView();
+            this.treeView1 = new OneDriveSaver.BufferedTreeView();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.contextMenuStrip2 = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -65,7 +65,7 @@ namespace DropboxMe
             // 
             this.notifyIcon1.ContextMenuStrip = this.contextMenuStrip1;
             this.notifyIcon1.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon1.Icon")));
-            this.notifyIcon1.Text = "DropboxMe";
+            this.notifyIcon1.Text = "OneDriveSaver";
             this.notifyIcon1.Visible = true;
             this.notifyIcon1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
             // 
@@ -225,8 +225,9 @@ namespace DropboxMe
             this.imageList1.ColorDepth = System.Windows.Forms.ColorDepth.Depth8Bit;
             this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
             this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
-            this.imageList1.Images.SetKeyName(0, "FolderBottomPanel_16x.png");
-            this.imageList1.Images.SetKeyName(1, "FileSystemDriverFile_16x.png");
+            this.imageList1.Images.SetKeyName(0, "FileSystemDriverFile_16x.png");
+            this.imageList1.Images.SetKeyName(1, "FolderOpened_16x.png");
+            this.imageList1.Images.SetKeyName(2, "DocumentsFolder_16x.png");
             // 
             // contextMenuStrip2
             // 
@@ -268,7 +269,7 @@ namespace DropboxMe
             this.Name = "Form1";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "DropboxMe";
+            this.Text = "OneDriveSaver";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.Resize += new System.EventHandler(this.Form1_Resize);
             this.contextMenuStrip1.ResumeLayout(false);

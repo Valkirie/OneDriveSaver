@@ -1,14 +1,9 @@
-﻿using Microsoft.Win32;
+﻿using Microsoft.Win32.TaskScheduler;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Win32.TaskScheduler;
-using Task = Microsoft.Win32.TaskScheduler.Task;
 using System.IO;
+using Task = Microsoft.Win32.TaskScheduler.Task;
 
-namespace DropboxMe
+namespace OneDriveSaver
 {
     class Utils
     {
@@ -36,7 +31,10 @@ namespace DropboxMe
         {
             try
             {
-                using (var stream = File.OpenRead(file))
+                if (File.Exists(file))
+                    using (var stream = File.OpenRead(file))
+                        return false;
+                else
                     return false;
             }
             catch (IOException)
