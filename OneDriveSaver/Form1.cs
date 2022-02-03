@@ -130,29 +130,43 @@ namespace OneDriveSaver
 
                 treeView1.Nodes.Clear();
 
-                IEnumerable<KeyValuePair<string, GameSettings>> directories = game.Settings.Where(a => a.Value.type == SymbolicLinkType.AllDirectories);
-                int idx_directory = 0;
+                Dictionary<GameSettings, TreeNode> settings = new Dictionary<GameSettings, TreeNode>();
 
-                foreach (KeyValuePair<string, GameSettings> pair in directories)
+                foreach(var pair in game.Settings)
                 {
                     GameSettings setting = pair.Value;
+                    string key = pair.Key;
+                    TreeNode Node = new TreeNode(setting.path, (int)setting.type, (int)setting.type);
+                    Node.Tag = setting.type;
 
-                    treeView1.Nodes.Add(setting.fileName, setting.path, (int)setting.type, (int)setting.type);
-                    treeView1.Nodes[idx_directory].Tag = setting.type;
+                    settings.Add(setting, Node);
+                }
 
-                    IEnumerable<KeyValuePair<string, GameSettings>> files = game.Settings.Where(a => a.Value.type == SymbolicLinkType.File && a.Value.parent == setting.fileName);
-                    int idx_files = 0;
+                foreach(var pair in settings)
+                {
+                    GameSettings setting = pair.Key;
+                    TreeNode node = pair.Value;
 
-                    foreach (KeyValuePair<string, GameSettings> sub_pair in files)
+                    if (setting.parent == null)
+                        continue;
+
+                    KeyValuePair<GameSettings, TreeNode> parent = settings.Where(a => a.Key.fileName == setting.parent).FirstOrDefault();
+                    parent.Value.Nodes.Add(node);
+                }
+
+                foreach (var pair in settings.Where(a => a.Key.parent == null))
+                {
+                    GameSettings setting = pair.Key;
+                    TreeNode node = pair.Value;
+
+                    try
                     {
-                        GameSettings sub_setting = sub_pair.Value;
-
-                        treeView1.Nodes[idx_directory].Nodes.Add(sub_setting.fileName, sub_setting.path, (int)sub_setting.type, (int)sub_setting.type);
-                        treeView1.Nodes[idx_directory].Nodes[idx_files].Tag = sub_setting.type;
-                        idx_files++;
+                        treeView1.Nodes.Add(node);
                     }
+                    catch(Exception ex)
+                    {
 
-                    idx_directory++;
+                    }
                 }
             });
         }
