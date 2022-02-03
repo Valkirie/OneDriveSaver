@@ -42,21 +42,20 @@ namespace OneDriveSaver
             this.path = EnvironmentManager.ContractEnvironmentVariables(path);
             this.symlink = EnvironmentManager.ContractEnvironmentVariables(symlink);
 
+            this.loc_path = path;
+            this.loc_symlink = symlink;
+
             DirectoryInfo pathDirectoryInfo = new DirectoryInfo(path);
             DirectoryInfo symDirectoryInfo = new DirectoryInfo(symlink);
 
             // extract key from filename
             fileName = $"{pathDirectoryInfo.Parent.Name}_{pathDirectoryInfo.Name}";
 
-            switch (fileAtributes)
-            {
-                case FileAttributes.Directory:
-                    type = SymbolicLinkType.AllDirectories;
-                    break;
-                default:
-                    type = SymbolicLinkType.File;
-                    break;
-            }
+            // dirty: what about symlink directories ?
+            if (fileAtributes.HasFlag(FileAttributes.Directory))
+                type = SymbolicLinkType.AllDirectories;
+            else
+                type = SymbolicLinkType.File;
 
             if (parent != null)
             {
@@ -112,8 +111,12 @@ namespace OneDriveSaver
                             status = GameSettingsCode.ValidSymlink;
                         else
                         {
+                            // symbolic target is missing
                             status = GameSettingsCode.InvalidSymlink;
+
+                            pathFileInfo.Delete();
                             this.game.EnqueueDelete(this); // do it here ?
+                            return;
                         }
                     }
                     // existing file is not a symbolic link
@@ -150,6 +153,7 @@ namespace OneDriveSaver
                         // broken symlink
                         status = GameSettingsCode.InvalidSymlink;
                         this.game.EnqueueDelete(this); // do it here ?
+                        return;
                     }
 
                     break;
@@ -164,8 +168,12 @@ namespace OneDriveSaver
                             status = GameSettingsCode.ValidSymlink;
                         else
                         {
+                            // symbolic target is missing
                             status = GameSettingsCode.InvalidSymlink;
+
+                            pathDirectoryInfo.Delete(true);
                             this.game.EnqueueDelete(this); // do it here ?
+                            return;
                         }
                     }
                     // existing directory is not a symbolic link
@@ -202,6 +210,7 @@ namespace OneDriveSaver
                         // broken symlink
                         status = GameSettingsCode.InvalidSymlink;
                         this.game.EnqueueDelete(this); // do it here ?
+                        return;
                     }
 
                     break;

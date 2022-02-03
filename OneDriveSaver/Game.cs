@@ -16,7 +16,7 @@ namespace OneDriveSaver
 
         // serialized variables
         public string Name { get; set; }
-        public Dictionary<string, GameSettings> Settings { get; set; } = new Dictionary<string, GameSettings>();
+        public ConcurrentDictionary<string, GameSettings> Settings { get; set; } = new ConcurrentDictionary<string, GameSettings>(StringComparer.InvariantCultureIgnoreCase);
         public List<string> Ignore { get; set; } = new();
 
         [JsonIgnore()] private ConcurrentDictionary<string, GameSettings> m_CreateQueue = new ConcurrentDictionary<string, GameSettings>(StringComparer.InvariantCultureIgnoreCase);
@@ -77,12 +77,10 @@ namespace OneDriveSaver
             {
                 GameSettings setting = pair.Value;
 
-                bool removed = Settings.ContainsKey(setting.fileName) ? Settings.Remove(setting.fileName) : true;
+                GameSettings result;
+                bool removed = Settings.ContainsKey(setting.fileName) ? Settings.TryRemove(setting.fileName, out result) : true;
                 if (removed)
-                {
-                    GameSettings result;
                     changed = m_DeleteQueue.TryRemove(setting.fileName, out result);
-                }
             }
 
             if (changed)
