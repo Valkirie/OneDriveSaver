@@ -19,10 +19,10 @@ namespace OneDriveSaver
         public Dictionary<string, GameSettings> Settings { get; set; } = new Dictionary<string, GameSettings>();
         public List<string> Ignore { get; set; } = new();
 
-        [JsonIgnore()] private ConcurrentQueue<GameSettings> m_CreateQueue = new();
+        [JsonIgnore()] private ConcurrentDictionary<string, GameSettings> m_CreateQueue = new ConcurrentDictionary<string, GameSettings>(StringComparer.InvariantCultureIgnoreCase);
         [JsonIgnore()] private Timer m_CreateQueueTimer;
 
-        [JsonIgnore()] private ConcurrentQueue<GameSettings> m_DeleteQueue = new();
+        [JsonIgnore()] private ConcurrentDictionary<string, GameSettings> m_DeleteQueue = new ConcurrentDictionary<string, GameSettings>(StringComparer.InvariantCultureIgnoreCase);
         [JsonIgnore()] private Timer m_DeleteQueueTimer;
 
         [JsonIgnore()] private Timer m_SerializeTimer;
@@ -73,14 +73,15 @@ namespace OneDriveSaver
 
             bool changed = false;
 
-            foreach (GameSettings setting in m_DeleteQueue)
+            foreach (var pair in m_DeleteQueue)
             {
-                bool removed = Settings.ContainsKey(setting.fileName) ? Settings.Remove(setting.fileName) : true;
+                GameSettings setting = pair.Value;
 
+                bool removed = Settings.ContainsKey(setting.fileName) ? Settings.Remove(setting.fileName) : true;
                 if (removed)
                 {
                     GameSettings result;
-                    changed = m_DeleteQueue.TryDequeue(out result);
+                    changed = m_DeleteQueue.TryRemove(setting.fileName, out result);
                 }
             }
 
@@ -98,8 +99,10 @@ namespace OneDriveSaver
 
             bool changed = false;
 
-            foreach (GameSettings setting in m_CreateQueue)
+            foreach (var pair in m_CreateQueue)
             {
+                GameSettings setting = pair.Value;
+
                 setting.Initialize(this);
                 bool symlinked = setting.status == GameSettingsCode.ValidSymlink ? true : setting.SetSymlink();
 
@@ -109,7 +112,7 @@ namespace OneDriveSaver
                     if (stored)
                     {
                         GameSettings result;
-                        changed = m_CreateQueue.TryDequeue(out result);
+                        changed = m_CreateQueue.TryRemove(setting.fileName, out result);
                     }
                 }
             }
@@ -123,8 +126,8 @@ namespace OneDriveSaver
 
         public void EnqueueCreate(GameSettings setting)
         {
-            if (!m_CreateQueue.Contains(setting))
-                m_CreateQueue.Enqueue(setting);
+            if (!m_CreateQueue.ContainsKey(setting.fileName))
+                m_CreateQueue.TryAdd(setting.fileName, setting);
 
             m_CreateQueueTimer.Stop();
             m_CreateQueueTimer.Start();
@@ -132,8 +135,8 @@ namespace OneDriveSaver
 
         public void EnqueueDelete(GameSettings setting)
         {
-            if (!m_DeleteQueue.Contains(setting))
-                m_DeleteQueue.Enqueue(setting);
+            if (!m_DeleteQueue.ContainsKey(setting.fileName))
+                m_DeleteQueue.TryAdd(setting.fileName, setting);
 
             m_DeleteQueueTimer.Stop();
             m_DeleteQueueTimer.Start();

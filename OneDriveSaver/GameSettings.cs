@@ -42,7 +42,11 @@ namespace OneDriveSaver
             this.path = EnvironmentManager.ContractEnvironmentVariables(path);
             this.symlink = EnvironmentManager.ContractEnvironmentVariables(symlink);
 
-            this.fileName = Path.GetFileName(path);
+            DirectoryInfo pathDirectoryInfo = new DirectoryInfo(path);
+            DirectoryInfo symDirectoryInfo = new DirectoryInfo(symlink);
+
+            // extract key from filename
+            fileName = $"{pathDirectoryInfo.Parent.Name}_{pathDirectoryInfo.Name}";
 
             switch (fileAtributes)
             {
@@ -94,16 +98,7 @@ namespace OneDriveSaver
             DirectoryInfo pathDirectoryInfo = new DirectoryInfo(loc_path);
             DirectoryInfo symDirectoryInfo = new DirectoryInfo(loc_symlink);
 
-            switch (type)
-            {
-                case SymLinkHelper.SymbolicLinkType.File:
-                    fileName = $"{pathDirectoryInfo.Parent.Name}_{pathDirectoryInfo.Name}";
-                    break;
-                case SymLinkHelper.SymbolicLinkType.TopDirectoryOnly:
-                case SymLinkHelper.SymbolicLinkType.AllDirectories:
-                    fileName = pathDirectoryInfo.Name;
-                    break;
-            }
+            fileName = $"{pathDirectoryInfo.Parent.Name}_{pathDirectoryInfo.Name}";
 
             switch (type)
             {
@@ -270,9 +265,12 @@ namespace OneDriveSaver
             string symPath = Path.GetDirectoryName(symName);
 
             FileInfo symFileInfo = new FileInfo(symName);
+
+            DirectoryInfo pathDirectoryInfo = new DirectoryInfo(e.FullPath);
             DirectoryInfo symDirectoryInfo = new DirectoryInfo(symPath);
 
-            string key = Path.GetFileName(symFileInfo.FullName);
+            // extract key from filename
+            string key = $"{pathDirectoryInfo.Parent.Name}_{pathDirectoryInfo.Name}";
 
             if (game.Settings.ContainsKey(key))
             {
@@ -319,13 +317,11 @@ namespace OneDriveSaver
             string relative = Path.GetRelativePath(loc_path, fileName);
             string symName = Path.Combine(loc_symlink, relative);
 
-            string filePath = Path.GetDirectoryName(fileName);
             string symPath = Path.GetDirectoryName(symName);
 
-            FileInfo pathFileInfo = new FileInfo(fileName);
-            FileInfo symFileInfo = new FileInfo(symName);
+            FileAttributes fileAttributes = File.GetAttributes(fileName);
 
-            DirectoryInfo pathDirectoryInfo = new DirectoryInfo(filePath);
+            DirectoryInfo pathDirectoryInfo = new DirectoryInfo(fileName);
             DirectoryInfo symDirectoryInfo = new DirectoryInfo(symPath);
 
             // create destination folder
@@ -333,7 +329,7 @@ namespace OneDriveSaver
                 symDirectoryInfo.Create();
 
             // extract key from filename
-            string key = pathFileInfo.Name.ToLower();
+            string key = $"{pathDirectoryInfo.Parent.Name}_{pathDirectoryInfo.Name}";
 
             // skip this file if in ignore list
             if (game.Ignore.Contains(key, StringComparer.CurrentCultureIgnoreCase))
@@ -343,7 +339,6 @@ namespace OneDriveSaver
             if (game.Settings.ContainsKey(key))
                 return;
 
-            FileAttributes fileAttributes = File.GetAttributes(fileName);
             new GameSettings(fileName, symName, fileAttributes, parent);
         }
 
@@ -353,20 +348,18 @@ namespace OneDriveSaver
             string fileName = Path.Combine(loc_path, relative);
 
             string filePath = Path.GetDirectoryName(fileName);
-            string symPath = Path.GetDirectoryName(symName);
 
-            FileInfo pathFileInfo = new FileInfo(fileName);
-            FileInfo symFileInfo = new FileInfo(symName);
+            FileAttributes fileAttributes = File.GetAttributes(symName);
 
             DirectoryInfo pathDirectoryInfo = new DirectoryInfo(filePath);
-            DirectoryInfo symDirectoryInfo = new DirectoryInfo(symPath);
+            DirectoryInfo symDirectoryInfo = new DirectoryInfo(symName);
 
             // create destination folder
             if (!pathDirectoryInfo.Exists)
                 pathDirectoryInfo.Create();
 
             // extract key from filename
-            string key = pathFileInfo.Name.ToLower();
+            string key = $"{symDirectoryInfo.Parent.Name}_{symDirectoryInfo.Name}";
 
             // skip this file if in ignore list
             if (game.Ignore.Contains(key, StringComparer.CurrentCultureIgnoreCase))
@@ -376,7 +369,6 @@ namespace OneDriveSaver
             if (game.Settings.ContainsKey(key))
                 return;
 
-            FileAttributes fileAttributes = File.GetAttributes(symName);
             new GameSettings(fileName, symName, fileAttributes, parent);
         }
     }
