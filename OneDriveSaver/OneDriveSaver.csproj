@@ -11,8 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.2" />
     <PackageReference Include="SymbolicLinkSupport" Version="1.2.0" />
-    <PackageReference Include="TaskScheduler" Version="2.9.3" />
+    <PackageReference Include="TaskScheduler" Version="2.10.0" />
   </ItemGroup>
 
   <ItemGroup>

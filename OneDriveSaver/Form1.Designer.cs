@@ -90,7 +90,7 @@ namespace OneDriveSaver
             this.gB_Profiles.Dock = System.Windows.Forms.DockStyle.Left;
             this.gB_Profiles.Location = new System.Drawing.Point(0, 0);
             this.gB_Profiles.Name = "gB_Profiles";
-            this.gB_Profiles.Size = new System.Drawing.Size(240, 396);
+            this.gB_Profiles.Size = new System.Drawing.Size(240, 429);
             this.gB_Profiles.TabIndex = 1;
             this.gB_Profiles.TabStop = false;
             this.gB_Profiles.Text = "Profiles";
@@ -102,14 +102,14 @@ namespace OneDriveSaver
             this.lB_Games.ItemHeight = 15;
             this.lB_Games.Location = new System.Drawing.Point(3, 19);
             this.lB_Games.Name = "lB_Games";
-            this.lB_Games.Size = new System.Drawing.Size(234, 349);
+            this.lB_Games.Size = new System.Drawing.Size(234, 382);
             this.lB_Games.TabIndex = 0;
             this.lB_Games.SelectedIndexChanged += new System.EventHandler(this.lB_Games_SelectedIndexChanged);
             // 
             // b_CreateProfile
             // 
             this.b_CreateProfile.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.b_CreateProfile.Location = new System.Drawing.Point(3, 368);
+            this.b_CreateProfile.Location = new System.Drawing.Point(3, 401);
             this.b_CreateProfile.Name = "b_CreateProfile";
             this.b_CreateProfile.Size = new System.Drawing.Size(234, 25);
             this.b_CreateProfile.TabIndex = 1;
@@ -128,7 +128,7 @@ namespace OneDriveSaver
             this.gB_ProfileDetails.Dock = System.Windows.Forms.DockStyle.Top;
             this.gB_ProfileDetails.Location = new System.Drawing.Point(240, 0);
             this.gB_ProfileDetails.Name = "gB_ProfileDetails";
-            this.gB_ProfileDetails.Size = new System.Drawing.Size(533, 119);
+            this.gB_ProfileDetails.Size = new System.Drawing.Size(768, 119);
             this.gB_ProfileDetails.TabIndex = 2;
             this.gB_ProfileDetails.TabStop = false;
             this.gB_ProfileDetails.Text = "Profile Details";
@@ -162,7 +162,7 @@ namespace OneDriveSaver
             this.tB_ProfilePath.Location = new System.Drawing.Point(156, 58);
             this.tB_ProfilePath.Name = "tB_ProfilePath";
             this.tB_ProfilePath.ReadOnly = true;
-            this.tB_ProfilePath.Size = new System.Drawing.Size(365, 23);
+            this.tB_ProfilePath.Size = new System.Drawing.Size(600, 23);
             this.tB_ProfilePath.TabIndex = 5;
             // 
             // lb_ProfilePath
@@ -181,7 +181,7 @@ namespace OneDriveSaver
             this.tB_ProfileName.Location = new System.Drawing.Point(156, 29);
             this.tB_ProfileName.Name = "tB_ProfileName";
             this.tB_ProfileName.ReadOnly = true;
-            this.tB_ProfileName.Size = new System.Drawing.Size(365, 23);
+            this.tB_ProfileName.Size = new System.Drawing.Size(600, 23);
             this.tB_ProfileName.TabIndex = 3;
             // 
             // lb_ProfileName
@@ -203,7 +203,7 @@ namespace OneDriveSaver
             this.gB_DeviceDetails.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gB_DeviceDetails.Location = new System.Drawing.Point(240, 119);
             this.gB_DeviceDetails.Name = "gB_DeviceDetails";
-            this.gB_DeviceDetails.Size = new System.Drawing.Size(533, 277);
+            this.gB_DeviceDetails.Size = new System.Drawing.Size(768, 310);
             this.gB_DeviceDetails.TabIndex = 4;
             this.gB_DeviceDetails.TabStop = false;
             this.gB_DeviceDetails.Text = "Profile Settings";
@@ -217,7 +217,7 @@ namespace OneDriveSaver
             this.treeView1.Location = new System.Drawing.Point(3, 19);
             this.treeView1.Name = "treeView1";
             this.treeView1.SelectedImageIndex = 0;
-            this.treeView1.Size = new System.Drawing.Size(527, 255);
+            this.treeView1.Size = new System.Drawing.Size(762, 288);
             this.treeView1.TabIndex = 0;
             // 
             // imageList1
@@ -257,19 +257,22 @@ namespace OneDriveSaver
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(773, 396);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            this.AutoSize = true;
+            this.ClientSize = new System.Drawing.Size(1008, 429);
             this.Controls.Add(this.gB_DeviceDetails);
             this.Controls.Add(this.gB_ProfileDetails);
             this.Controls.Add(this.gB_Profiles);
             this.DoubleBuffered = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(1024, 468);
             this.Name = "Form1";
-            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Show;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "OneDriveSaver";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_Close);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.Resize += new System.EventHandler(this.Form1_Resize);
             this.contextMenuStrip1.ResumeLayout(false);

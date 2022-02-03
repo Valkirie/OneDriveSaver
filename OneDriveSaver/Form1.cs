@@ -12,8 +12,12 @@ namespace OneDriveSaver
     public partial class Form1 : Form
     {
         private string onedrivePath, onedrivesavePath;
-        private bool StartOnBoot, BackupOnStart;
-        private LibraryMgr libManager;
+        private bool StartOnBoot, BackupOnStart, StartMinimized, CloseMinimises, ToastEnable, appClosing;
+
+        private LibraryMgr m_LibraryManager;
+        private ToastManager m_ToastManager;
+
+        private FormWindowState prevWindowState;
 
         public Form1()
         {
@@ -31,6 +35,10 @@ namespace OneDriveSaver
             // settings
             StartOnBoot = Properties.Settings.Default.StartOnBoot;
             BackupOnStart = Properties.Settings.Default.BackupOnStart;
+            StartMinimized = Properties.Settings.Default.StartMinimized;
+            CloseMinimises = Properties.Settings.Default.CloseMinimises;
+            ToastEnable = Properties.Settings.Default.ToastEnable;
+
             onedrivesavePath = Path.Combine(onedrivePath, "Saved Games");
 
             // update environment var
@@ -39,11 +47,16 @@ namespace OneDriveSaver
             // initialize Task Manager
             Utils.SetStartup(StartOnBoot, Application.ExecutablePath, "OneDriveSavedGames");
 
+            // initialize toast manager
+            m_ToastManager = new ToastManager("ControllerService");
+            m_ToastManager.Enabled = ToastEnable;
+
             if (!Directory.Exists(onedrivesavePath))
                 Directory.CreateDirectory(onedrivesavePath);
 
             if (BackupOnStart)
             {
+                m_ToastManager.SendToast("OneDrive Saver", "Please wait while we create a backup of all your precious game saves.");
                 DateTime localDate = DateTime.Now;
                 string filename = $"SavedGames-{localDate.ToString("dd-MM-yyyy")}.zip";
                 if (!File.Exists($"{onedrivePath}\\{filename}"))
@@ -51,33 +64,18 @@ namespace OneDriveSaver
             }
 
             // initialize library manager
-            libManager = new LibraryMgr(onedrivesavePath);
-            libManager.Updated += UpdateList;
-
-            /*
-             * Dictionary<string, GameSettings> testsettings = new();                
-             * 
-             * FileInfo info = new FileInfo("%localappdata%\\kena\\saved\\savegames\\");
-             * DirectoryInfo info2 = new DirectoryInfo("%localappdata%\\kena\\saved\\savegames\\");                
-             * 
-             * GameSettings testsetting = new GameSettings("%localappdata%\\kena\\saved\\savegames\\", "%userprofile%\\dropbox\\dropboxme\\kena bridge of spirits\\saves\\", SymLinkHelper.SymbolicLinkType.Directory);
-             * testsettings.Add(info2.Name, testsetting);
-             * 
-             * testsetting = new GameSettings("%localappdata%\\kena\\saved\\savegames\\autosave.sav", "%userprofile%\\dropbox\\dropboxme\\kena bridge of spirits\\saves\\autosave.sav", SymLinkHelper.SymbolicLinkType.File);
-             * testsettings.Add("autosave.sav", testsetting);                
-             * 
-             * Game test = new Game()                
-             * {                    
-             * Name = "test",                    
-             * Settings = testsettings                
-             * };                
-             * test.Serialize();            
-             */
+            m_LibraryManager = new LibraryMgr(onedrivesavePath);
+            m_LibraryManager.Updated += UpdateList;
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            libManager.Process();
+            // update Position and Size
+            Size = new Size((int)Math.Max(this.MinimumSize.Width, Properties.Settings.Default.MainWindowWidth), (int)Math.Max(this.MinimumSize.Height, Properties.Settings.Default.MainWindowHeight));
+            Location = new Point((int)Math.Max(0, Properties.Settings.Default.MainWindowX), (int)Math.Max(0, Properties.Settings.Default.MainWindowY));
+            WindowState = StartMinimized ? FormWindowState.Minimized : (FormWindowState)Properties.Settings.Default.WindowState;
+
+            m_LibraryManager.Process();
         }
 
         #region UI
@@ -87,6 +85,7 @@ namespace OneDriveSaver
             this.BeginInvoke((MethodInvoker)delegate ()
             {
                 lB_Games.Items.Add(game);
+                m_ToastManager.SendToast("OneDrive Saver", $"{game.Name} was updated.");
             });
         }
 
@@ -94,16 +93,44 @@ namespace OneDriveSaver
 
         private void Form1_Resize(object sender, EventArgs e)
         {
-            if (WindowState == FormWindowState.Minimized)
+            switch (WindowState)
             {
-                notifyIcon1.Visible = true;
-                ShowInTaskbar = false;
+                case FormWindowState.Minimized:
+                    notifyIcon1.Visible = true;
+                    ShowInTaskbar = false;
+                    m_ToastManager.SendToast("OneDrive Saver", "The application is running in the background");
+                    break;
+                case FormWindowState.Normal:
+                case FormWindowState.Maximized:
+                    notifyIcon1.Visible = false;
+                    ShowInTaskbar = true;
+                    prevWindowState = WindowState;
+                    break;
             }
-            else if (WindowState == FormWindowState.Normal)
+        }
+
+        private void Form1_Close(object sender, FormClosingEventArgs e)
+        {
+            // position and size settings
+            switch (WindowState)
             {
-                notifyIcon1.Visible = false;
-                ShowInTaskbar = true;
+                case FormWindowState.Normal:
+                    Properties.Settings.Default.MainWindowX = (uint)Location.X;
+                    Properties.Settings.Default.MainWindowY = (uint)Location.Y;
+
+                    Properties.Settings.Default.MainWindowWidth = (uint)Size.Width;
+                    Properties.Settings.Default.MainWindowHeight = (uint)Size.Height;
+                    break;
             }
+            Properties.Settings.Default.WindowState = (int)WindowState;
+
+            if (CloseMinimises && e.CloseReason == CloseReason.UserClosing && !appClosing)
+            {
+                e.Cancel = true;
+                WindowState = FormWindowState.Minimized;
+            }
+
+            Properties.Settings.Default.Save();
         }
 
         private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -204,7 +231,7 @@ namespace OneDriveSaver
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Close();
+            Application.Exit();
         }
     }
 }
