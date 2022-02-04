@@ -7,15 +7,15 @@ namespace OneDriveSaver
 {
     public static class EnvironmentManager
     {
-        static Dictionary<string, string> EnviromentVars = new Dictionary<string, string>();
+        static Dictionary<string, string> EnviromentVars = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
         static EnvironmentManager()
         {
-            SortedDictionary<string, string> TempVars = new SortedDictionary<string, string>();
+            SortedDictionary<string, string> TempVars = new();
             foreach (DictionaryEntry de in Environment.GetEnvironmentVariables())
             {
-                string key = $"%{de.Key.ToString().ToLower()}%";
-                string value = $"{de.Value.ToString().ToLower()}";
+                string key = $"%{de.Key.ToString()}%";
+                string value = $"%{de.Value.ToString()}%";
 
                 if (value == "")
                     continue;
@@ -23,19 +23,6 @@ namespace OneDriveSaver
                 if (!TempVars.ContainsKey(key))
                     TempVars.Add(key, value);
             }
-
-            /* Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            foreach (Environment.SpecialFolder special in (Environment.SpecialFolder[])Enum.GetValues(typeof(Environment.SpecialFolder)))
-            {
-                string key = $"%{special.ToString().ToLower()}%";
-                string value = Environment.GetFolderPath(special).ToString().ToLower();
-
-                if (value == "")
-                    continue;
-
-                if (!TempVars.ContainsKey(key))
-                    TempVars.Add(key, value);
-            } */
 
             var items = from pair in TempVars orderby pair.Value.Length descending select pair;
 
@@ -47,15 +34,12 @@ namespace OneDriveSaver
 
         public static string ContractEnvironmentVariables(string path)
         {
-            string filename = path.ToLower();
+            string filename = path;
 
-            foreach (KeyValuePair<string, string> item in EnviromentVars)
+            foreach (KeyValuePair<string, string> item in EnviromentVars.Where(a => filename.Contains(a.Value, StringComparison.InvariantCultureIgnoreCase)))
             {
-                if (filename.Contains(item.Value))
-                {
-                    filename = filename.Replace(item.Value, item.Key);
-                    break;
-                }
+                filename = filename.Replace(item.Value, item.Key, StringComparison.InvariantCultureIgnoreCase);
+                break;
             }
 
             return filename;

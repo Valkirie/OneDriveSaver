@@ -53,12 +53,16 @@ namespace OneDriveSaver
             this.deleteFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip3 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.deleteFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuStrip4 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.openFileLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openSymlinkLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.gB_Profiles.SuspendLayout();
             this.gB_ProfileDetails.SuspendLayout();
             this.gB_DeviceDetails.SuspendLayout();
             this.contextMenuStrip2.SuspendLayout();
             this.contextMenuStrip3.SuspendLayout();
+            this.contextMenuStrip4.SuspendLayout();
             this.SuspendLayout();
             // 
             // notifyIcon1
@@ -210,6 +214,7 @@ namespace OneDriveSaver
             // 
             // treeView1
             // 
+            this.treeView1.ContextMenuStrip = this.contextMenuStrip4;
             this.treeView1.Cursor = System.Windows.Forms.Cursors.Default;
             this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.treeView1.ImageIndex = 0;
@@ -255,6 +260,26 @@ namespace OneDriveSaver
             this.deleteFileToolStripMenuItem.Size = new System.Drawing.Size(128, 22);
             this.deleteFileToolStripMenuItem.Text = "Delete File";
             // 
+            // contextMenuStrip4
+            // 
+            this.contextMenuStrip4.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.openFileLocationToolStripMenuItem,
+            this.openSymlinkLocationToolStripMenuItem});
+            this.contextMenuStrip4.Name = "contextMenuStrip4";
+            this.contextMenuStrip4.Size = new System.Drawing.Size(198, 48);
+            // 
+            // openFileLocationToolStripMenuItem
+            // 
+            this.openFileLocationToolStripMenuItem.Name = "openFileLocationToolStripMenuItem";
+            this.openFileLocationToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
+            this.openFileLocationToolStripMenuItem.Text = "Open File Location";
+            // 
+            // openSymlinkLocationToolStripMenuItem
+            // 
+            this.openSymlinkLocationToolStripMenuItem.Name = "openSymlinkLocationToolStripMenuItem";
+            this.openSymlinkLocationToolStripMenuItem.Size = new System.Drawing.Size(197, 22);
+            this.openSymlinkLocationToolStripMenuItem.Text = "Open Symlink Location";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -282,6 +307,7 @@ namespace OneDriveSaver
             this.gB_DeviceDetails.ResumeLayout(false);
             this.contextMenuStrip2.ResumeLayout(false);
             this.contextMenuStrip3.ResumeLayout(false);
+            this.contextMenuStrip4.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -310,6 +336,9 @@ namespace OneDriveSaver
         private System.Windows.Forms.ToolStripMenuItem deleteFolderToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip3;
         private System.Windows.Forms.ToolStripMenuItem deleteFileToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip4;
+        private System.Windows.Forms.ToolStripMenuItem openFileLocationToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openSymlinkLocationToolStripMenuItem;
     }
 }
 

@@ -10,7 +10,7 @@ namespace OneDriveSaver
 {
     public class ToastManager
     {
-        private const int m_Interval = 5000;
+        private const int m_Interval = 7000;
         private int m_Timer;
 
         private string m_Group;
@@ -26,7 +26,7 @@ namespace OneDriveSaver
             if (!Enabled)
                 return;
 
-            string url = $"file:///{AppDomain.CurrentDomain.BaseDirectory}Resources\\{img}.png";
+            string url = $"file:///{AppDomain.CurrentDomain.BaseDirectory}{img}.png";
             var uri = new Uri(url);
 
             DateTimeOffset DeliveryTime = new DateTimeOffset(DateTime.Now.AddMilliseconds(100));

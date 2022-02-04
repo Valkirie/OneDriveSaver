@@ -42,7 +42,7 @@ namespace OneDriveSaver
             m_SerializeTimer = new Timer(500) { Enabled = false, AutoReset = false };
             m_SerializeTimer.Elapsed += Serialize;
 
-            foreach (KeyValuePair<string, GameSettings> pair in Settings)
+            foreach (KeyValuePair<string, GameSettings> pair in Settings.OrderBy(a => a.Key.Length))
             {
                 GameSettings setting = pair.Value;
                 setting.Initialize(this);

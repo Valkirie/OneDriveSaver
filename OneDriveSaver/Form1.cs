@@ -56,7 +56,7 @@ namespace OneDriveSaver
 
             if (BackupOnStart)
             {
-                m_ToastManager.SendToast("OneDrive Saver", "Please wait while we create a backup of all your precious game saves.");
+                m_ToastManager.SendToast("Information", "Please wait while we create a backup of all your precious game saves.");
                 DateTime localDate = DateTime.Now;
                 string filename = $"SavedGames-{localDate.ToString("dd-MM-yyyy")}.zip";
                 if (!File.Exists($"{onedrivePath}\\{filename}"))
@@ -65,7 +65,9 @@ namespace OneDriveSaver
 
             // initialize library manager
             m_LibraryManager = new LibraryMgr(onedrivesavePath);
-            m_LibraryManager.Updated += UpdateList;
+            m_LibraryManager.Updated += UpdateSucceeded;
+            m_LibraryManager.Failed += UpdateFailed;
+            m_LibraryManager.Completed += UpdateCompleted;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -80,13 +82,22 @@ namespace OneDriveSaver
 
         #region UI
 
-        public void UpdateList(Game game)
+        private void UpdateCompleted()
+        {
+            m_ToastManager.SendToast("Information", $"Library scan completed.");
+        }
+
+        public void UpdateSucceeded(Game game)
         {
             this.BeginInvoke((MethodInvoker)delegate ()
             {
                 lB_Games.Items.Add(game);
-                m_ToastManager.SendToast("OneDrive Saver", $"{game.Name} was updated.");
             });
+        }
+
+        private void UpdateFailed(string fileName)
+        {
+            m_ToastManager.SendToast("Error", $"{fileName} could not be deserialized.");
         }
 
         #endregion
@@ -98,7 +109,7 @@ namespace OneDriveSaver
                 case FormWindowState.Minimized:
                     notifyIcon1.Visible = true;
                     ShowInTaskbar = false;
-                    m_ToastManager.SendToast("OneDrive Saver", "The application is running in the background");
+                    m_ToastManager.SendToast("Information", "The application is running in the background");
                     break;
                 case FormWindowState.Normal:
                 case FormWindowState.Maximized:
@@ -169,7 +180,7 @@ namespace OneDriveSaver
                     settings.Add(setting, Node);
                 }
 
-                foreach(var pair in settings)
+                foreach(var pair in settings.OrderBy(a => a.Key.fileName.Length))
                 {
                     GameSettings setting = pair.Key;
                     TreeNode node = pair.Value;
@@ -178,7 +189,8 @@ namespace OneDriveSaver
                         continue;
 
                     KeyValuePair<GameSettings, TreeNode> parent = settings.Where(a => a.Key.fileName == setting.parent).FirstOrDefault();
-                    parent.Value.Nodes.Add(node);
+                    if (parent.Value != null) // should not happen, prevent crash
+                        parent.Value.Nodes.Add(node);
                 }
 
                 foreach (var pair in settings.Where(a => a.Key.parent == null))

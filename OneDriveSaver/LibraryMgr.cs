@@ -10,8 +10,14 @@ namespace OneDriveSaver
         public Dictionary<string, Game> games = new Dictionary<string, Game>(StringComparer.InvariantCultureIgnoreCase);
         private string path;
 
-        public event HasUpdatedEventHandler Updated;
-        public delegate void HasUpdatedEventHandler(Game sender);
+        public event UpdatedEventHandler Updated;
+        public delegate void UpdatedEventHandler(Game game);
+
+        public event CompletedEventHandler Completed;
+        public delegate void CompletedEventHandler();
+
+        public event FailedEventHandler Failed;
+        public delegate void FailedEventHandler(string fileName);
 
         public LibraryMgr(string path)
         {
@@ -29,6 +35,7 @@ namespace OneDriveSaver
 
                 ProcessGame(settingsPath);
             }
+            Completed?.Invoke();
         }
 
         private void ProcessGame(string fileName)
@@ -41,8 +48,9 @@ namespace OneDriveSaver
                 game = JsonSerializer.Deserialize<Game>(outputraw);
                 game.m_Path = fileName;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
+                Failed?.Invoke(fileName);
             }
 
             // failed to parse
