@@ -15,7 +15,7 @@ namespace OneDriveSaver
             foreach (DictionaryEntry de in Environment.GetEnvironmentVariables())
             {
                 string key = $"%{de.Key.ToString()}%";
-                string value = $"%{de.Value.ToString()}%";
+                string value = de.Value.ToString();
 
                 if (value == "")
                     continue;
