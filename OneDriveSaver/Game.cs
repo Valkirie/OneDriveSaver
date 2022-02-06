@@ -64,6 +64,10 @@ namespace OneDriveSaver
                 Directory.CreateDirectory(target_folder);
 
             File.WriteAllText(this.m_Path, jsonString);
+
+            // garbage collector
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         private void BrowseDeletedQueue(object sender, ElapsedEventArgs e)
