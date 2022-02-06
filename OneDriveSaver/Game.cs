@@ -39,7 +39,7 @@ namespace OneDriveSaver
             m_DeleteQueueTimer = new Timer(500) { Enabled = false, AutoReset = true };
             m_DeleteQueueTimer.Elapsed += BrowseDeletedQueue;
 
-            m_SerializeTimer = new Timer(500) { Enabled = false, AutoReset = false };
+            m_SerializeTimer = new Timer(2000) { Enabled = false, AutoReset = false };
             m_SerializeTimer.Elapsed += Serialize;
 
             foreach (KeyValuePair<string, GameSettings> pair in Settings.OrderBy(a => a.Key.Length))
