@@ -69,7 +69,10 @@ namespace OneDriveSaver
         private void BrowseDeletedQueue(object sender, ElapsedEventArgs e)
         {
             if (m_DeleteQueue.IsEmpty)
+            {
+                m_DeleteQueueTimer.Stop();
                 return;
+            }
 
             bool changed = false;
 
@@ -93,7 +96,10 @@ namespace OneDriveSaver
         private void BrowseCreatedQueue(object sender, ElapsedEventArgs e)
         {
             if (m_CreateQueue.IsEmpty)
+            {
+                m_CreateQueueTimer.Stop();
                 return;
+            }
 
             bool changed = false;
 
