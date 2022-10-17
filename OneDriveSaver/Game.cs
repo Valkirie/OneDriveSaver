@@ -54,8 +54,23 @@ namespace OneDriveSaver
             if (!m_DeleteQueue.IsEmpty || !m_CreateQueue.IsEmpty)
                 return;
 
+            Game export = new Game()
+            {
+                Ignore = this.Ignore,
+                m_Path = this.m_Path
+            };
+            
+            // do not serialize non-parent settings
+            foreach(var pair in this.Settings)
+            {
+                if (pair.Value.parent != null)
+                    continue;
+
+                export.Settings.TryAdd(pair.Key, pair.Value);
+            }
+
             var options = new JsonSerializerOptions { WriteIndented = true };
-            string jsonString = JsonSerializer.Serialize(this, options);
+            string jsonString = JsonSerializer.Serialize(export, options);
 
             // write to disk
             string target_folder = System.IO.Path.GetDirectoryName(this.m_Path);
