@@ -2,7 +2,7 @@
 
 namespace OneDriveSaver
 {
-    public class SymLinkHelper
+    public static class SymLinkHelper
     {
         [DllImport("kernel32.dll")]
         public static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, SymbolicLinkType dwFlags);

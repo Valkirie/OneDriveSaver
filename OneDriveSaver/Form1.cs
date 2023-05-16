@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
@@ -17,7 +18,8 @@ namespace OneDriveSaver
         private LibraryMgr m_LibraryManager;
         private ToastManager m_ToastManager;
 
-        private FormWindowState prevWindowState;
+        private Process OneDriveProcess;
+        private IntPtr OneDriveWindowHandle;
 
         public Form1()
         {
@@ -28,8 +30,43 @@ namespace OneDriveSaver
 
             if (!Directory.Exists(onedrivePath))
             {
-                MessageBox.Show("OneDrive could not be found!");
-                Application.Exit();
+                MessageBox.Show("OneDrive could not be found. Exiting!");
+                return;
+            }
+
+            var processes = Process.GetProcessesByName("OneDrive");
+            if (processes.Length == 0)
+            {
+                MessageBox.Show("OneDrive is not running. Exiting!");
+                return;
+            }
+            else
+            {
+                foreach(Process process in processes)
+                {
+                    IntPtr[] processWindows = WindowHelper.GetProcessWindows(process.Id);
+                    foreach(IntPtr WindowHandle in processWindows)
+                    {
+                        string WindowTitle = WindowHelper.GetWindowTitle(WindowHandle);
+                        if (WindowTitle.Equals("OneDrive - Personal", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            // store handle
+                            OneDriveWindowHandle = WindowHandle;
+
+                            // store process
+                            OneDriveProcess = process;
+                            OneDriveProcess.EnableRaisingEvents = true;
+                            OneDriveProcess.Exited += OneDriveProcess_Exited;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (OneDriveProcess is null)
+            {
+                MessageBox.Show("We couldn't find a Personal instance of OneDrive running. Exiting!");
+                return;
             }
 
             // settings
@@ -68,6 +105,12 @@ namespace OneDriveSaver
             m_LibraryManager.Updated += UpdateSucceeded;
             m_LibraryManager.Failed += UpdateFailed;
             m_LibraryManager.Completed += UpdateCompleted;
+        }
+
+        private void OneDriveProcess_Exited(object sender, EventArgs e)
+        {
+            // OneDrive was halted, stop OneDriveSaver
+            Application.Exit();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -115,7 +158,6 @@ namespace OneDriveSaver
                 case FormWindowState.Maximized:
                     notifyIcon1.Visible = false;
                     ShowInTaskbar = true;
-                    prevWindowState = WindowState;
                     break;
             }
         }
