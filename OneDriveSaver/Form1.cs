@@ -30,15 +30,13 @@ namespace OneDriveSaver
 
             if (!Directory.Exists(onedrivePath))
             {
-                MessageBox.Show("OneDrive could not be found. Exiting!");
-                return;
+                LogManager.LogCritical("OneDrive could not be found. Exiting!");
             }
 
             var processes = Process.GetProcessesByName("OneDrive");
             if (processes.Length == 0)
             {
-                MessageBox.Show("OneDrive is not running. Exiting!");
-                return;
+                LogManager.LogCritical("OneDrive is not running. Exiting!");
             }
             else
             {
@@ -64,10 +62,7 @@ namespace OneDriveSaver
             }
 
             if (OneDriveProcess is null)
-            {
-                MessageBox.Show("We couldn't find a Personal instance of OneDrive running. Exiting!");
-                return;
-            }
+                LogManager.LogCritical("We couldn't find a Personal instance of OneDrive running. Exiting!");
 
             // settings
             StartOnBoot = Properties.Settings.Default.StartOnBoot;
@@ -128,6 +123,7 @@ namespace OneDriveSaver
         private void UpdateCompleted()
         {
             m_ToastManager.SendToast("Information", $"Library scan completed.");
+            LogManager.LogInformation($"Library scan completed.");
         }
 
         public void UpdateSucceeded(Game game)
@@ -135,12 +131,14 @@ namespace OneDriveSaver
             this.BeginInvoke((MethodInvoker)delegate ()
             {
                 lB_Games.Items.Add(game);
+                LogManager.LogInformation($"{game.Name} updated.");
             });
         }
 
         private void UpdateFailed(string fileName)
         {
             m_ToastManager.SendToast("Error", $"{fileName} could not be deserialized.");
+            LogManager.LogError($"{fileName} could not be deserialized.");
         }
 
         #endregion

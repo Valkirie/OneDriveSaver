@@ -54,8 +54,10 @@ namespace OneDriveSaver
             if (!m_DeleteQueue.IsEmpty || !m_CreateQueue.IsEmpty)
                 return;
 
+            // that's poor cloning
             Game export = new Game()
             {
+                Name = this.Name,
                 Ignore = this.Ignore,
                 m_Path = this.m_Path
             };

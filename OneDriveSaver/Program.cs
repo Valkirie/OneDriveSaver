@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Security.Principal;
 using System.Windows.Forms;
 
@@ -16,6 +18,15 @@ namespace OneDriveSaver
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
+            Assembly CurrentAssembly = Assembly.GetExecutingAssembly();
+            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(CurrentAssembly.Location);
+
+            // initialize log manager
+            LogManager.Initialize("OneDriveSaver");
+            LogManager.LogInformation("{0} ({1})", CurrentAssembly.GetName(), fileVersionInfo.ProductVersion);
 
             if (!IsAdministrator())
             {
