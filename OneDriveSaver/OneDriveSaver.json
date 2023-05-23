@@ -11,13 +11,6 @@
     "MinimumLevel": "Debug",
     "WriteTo": [
       {
-        "Name": "File",
-        "Args": {
-          "path": ".\\logs\\OneDriveSaver.log",
-          "rollingInterval": "Day"
-        }
-      },
-      {
         "Name": "Console",
         "Args": {
           "restrictedToMinimumLevel": "Information"

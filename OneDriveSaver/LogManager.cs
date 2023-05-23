@@ -2,7 +2,9 @@
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Extensions.Logging;
+using Steeltoe.Extensions.Configuration.Placeholder;
 using System;
+using System.Configuration;
 using System.Diagnostics;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -14,11 +16,13 @@ namespace OneDriveSaver
         public static void Initialize(string name)
         {
             var configuration = new ConfigurationBuilder()
-                        .AddJsonFile($"{name}.json")
-                        .Build();
+                .AddJsonFile($"{name}.json")
+                .AddPlaceholderResolver()
+                .Build();
 
             var serilogLogger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
+                .WriteTo.File($".\\logs\\OneDriveSaver{Environment.MachineName}_.log", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
             logger = new SerilogLoggerFactory(serilogLogger).CreateLogger(name);

@@ -119,6 +119,8 @@ namespace OneDriveSaver
                             status = GameSettingsCode.InvalidSymlink;
 
                             pathFileInfo.Delete();
+                            LogManager.LogInformation("Deleting broken symbolic link {0}", pathFileInfo.FullName);
+
                             this.game.EnqueueDelete(this); // do it here ?
                             return;
                         }
@@ -133,19 +135,24 @@ namespace OneDriveSaver
                             if (pathFileInfo.LastWriteTime > symFileInfo.LastWriteTime)
                             {
                                 symFileInfo.Delete();
+                                LogManager.LogInformation("Deleting outdated backup file {0}", symFileInfo.FullName);
+
                                 // move the backup so it's ready for symlink process
                                 pathFileInfo.MoveTo(symFileInfo.FullName);
+                                LogManager.LogInformation("Moving file {0} to {1}", pathFileInfo.FullName, symFileInfo.FullName);
                             }
                             else
                             {
                                 // delete the outdated existing file
                                 pathFileInfo.Delete();
+                                LogManager.LogInformation("Deleting file {0} as we've got more recent backup", pathFileInfo.FullName);
                             }
                         }
                         else
                         {
                             // move the backup so it's ready for symlink process
                             pathFileInfo.MoveTo(symFileInfo.FullName);
+                            LogManager.LogInformation("Moving file {0} to {1}", pathFileInfo.FullName, symFileInfo.FullName);
                         }
                     }
                     else if (symFileInfo.Exists)
@@ -157,6 +164,8 @@ namespace OneDriveSaver
                         // broken symlink
                         status = GameSettingsCode.InvalidSymlink;
                         this.game.EnqueueDelete(this); // do it here ?
+
+                        LogManager.LogInformation("Deleting broken symlink {0}", this.fileName);
                         return;
                     }
 
@@ -176,6 +185,8 @@ namespace OneDriveSaver
                             status = GameSettingsCode.InvalidSymlink;
 
                             pathDirectoryInfo.Delete(true);
+                            LogManager.LogInformation("Deleting broken symbolic link {0}", pathDirectoryInfo.FullName);
+
                             this.game.EnqueueDelete(this); // do it here ?
                             return;
                         }
@@ -190,19 +201,24 @@ namespace OneDriveSaver
                             if (pathFileInfo.LastWriteTime > symDirectoryInfo.LastWriteTime)
                             {
                                 symDirectoryInfo.Delete(true);
+                                LogManager.LogInformation("Deleting outdated backup path {0}", symDirectoryInfo.FullName);
+
                                 // move the backup so it's ready for symlink process
                                 pathDirectoryInfo.MoveTo(symDirectoryInfo.FullName);
+                                LogManager.LogInformation("Moving path {0} to {1}", pathDirectoryInfo.FullName, symDirectoryInfo.FullName);
                             }
                             else
                             {
                                 // delete the outdated existing directory
                                 pathDirectoryInfo.Delete(true);
+                                LogManager.LogInformation("Deleting path {0} as we've got more recent backup", pathDirectoryInfo.FullName);
                             }
                         }
                         else
                         {
                             // move the backup so it's ready for symlink process
                             pathDirectoryInfo.MoveTo(symDirectoryInfo.FullName);
+                            LogManager.LogInformation("Moving path {0} to {1}", pathDirectoryInfo.FullName, symDirectoryInfo.FullName);
                         }
                     }
                     else if (symDirectoryInfo.Exists)
@@ -214,6 +230,8 @@ namespace OneDriveSaver
                         // broken symlink
                         status = GameSettingsCode.InvalidSymlink;
                         this.game.EnqueueDelete(this); // do it here ?
+
+                        LogManager.LogInformation("Deleting broken symlink {0}", this.fileName);
                         return;
                     }
 
