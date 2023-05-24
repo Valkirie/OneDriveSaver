@@ -1,4 +1,5 @@
-﻿using SymbolicLinkSupport;
+﻿using OneDriveSaver.Properties;
+using SymbolicLinkSupport;
 using System;
 using System.IO;
 using System.Linq;
@@ -51,9 +52,13 @@ namespace OneDriveSaver
             // extract key from filename
             fileName = $"{pathDirectoryInfo}".ToLower();
 
-            // dirty: what about symlink directories ?
             if (fileAtributes.HasFlag(FileAttributes.Directory))
-                type = SymbolicLinkType.AllDirectories;
+            {
+                if (parent is not null)
+                    type = SymbolicLinkType.AllDirectories;
+                else
+                    type = SymbolicLinkType.TopDirectoryOnly;
+            }
             else
                 type = SymbolicLinkType.File;
 
@@ -62,15 +67,15 @@ namespace OneDriveSaver
                 this.parent = parent.fileName;
 
                 if (parent.game != null)
-                {
                     this.game = parent.game;
-                    this.game.EnqueueCreate(this);
-                }
                 else
                 {
-                    throw new Exception();
+                    LogManager.LogError("ERROR!!!???");
+                    return;
                 }
             }
+
+            this.game.EnqueueCreate(this);
         }
 
         public bool SetSymlink()
@@ -106,181 +111,184 @@ namespace OneDriveSaver
             switch (type)
             {
                 case SymbolicLinkType.File:
-
-                    // existing file is a symbolic link already
-                    if (pathFileInfo.Exists && pathFileInfo.IsSymbolicLink())
                     {
-                        // target is present, all good!
-                        if (pathFileInfo.IsSymbolicLinkValid())
-                            status = GameSettingsCode.ValidSymlink;
-                        else
+                        // existing file is a symbolic link already
+                        if (pathFileInfo.Exists && pathFileInfo.IsSymbolicLink())
                         {
-                            // symbolic target is missing
-                            status = GameSettingsCode.InvalidSymlink;
-
-                            pathFileInfo.Delete();
-                            LogManager.LogInformation("Deleting broken symbolic link {0}", pathFileInfo.FullName);
-
-                            this.game.EnqueueDelete(this); // do it here ?
-                            return;
-                        }
-                    }
-                    // existing file is not a symbolic link
-                    else if (pathFileInfo.Exists)
-                    {
-                        // we already have a backup, keep the most recent one?
-                        if (symFileInfo.Exists)
-                        {
-                            // delete the outdated backup
-                            if (pathFileInfo.LastWriteTime > symFileInfo.LastWriteTime)
+                            // target is present, all good!
+                            if (pathFileInfo.IsSymbolicLinkValid())
+                                status = GameSettingsCode.ValidSymlink;
+                            else
                             {
-                                symFileInfo.Delete();
-                                LogManager.LogInformation("Deleting outdated backup file {0}", symFileInfo.FullName);
+                                // symbolic target is missing
+                                status = GameSettingsCode.InvalidSymlink;
 
+                                pathFileInfo.Delete();
+                                LogManager.LogInformation("Deleting broken symbolic link {0}", pathFileInfo.FullName);
+
+                                this.game.EnqueueDelete(this); // do it here ?
+                                return;
+                            }
+                        }
+                        // existing file is not a symbolic link
+                        else if (pathFileInfo.Exists)
+                        {
+                            // we already have a backup, keep the most recent one?
+                            if (symFileInfo.Exists)
+                            {
+                                // delete the outdated backup
+                                if (pathFileInfo.LastWriteTime > symFileInfo.LastWriteTime)
+                                {
+                                    symFileInfo.Delete();
+                                    LogManager.LogInformation("Deleting outdated backup file {0}", symFileInfo.FullName);
+
+                                    // move the backup so it's ready for symlink process
+                                    pathFileInfo.MoveTo(symFileInfo.FullName);
+                                    LogManager.LogInformation("Moving file {0} to {1}", pathFileInfo.FullName, symFileInfo.FullName);
+                                }
+                                else
+                                {
+                                    // delete the outdated existing file
+                                    pathFileInfo.Delete();
+                                    LogManager.LogInformation("Deleting file {0} as we've got more recent backup", pathFileInfo.FullName);
+                                }
+                            }
+                            else
+                            {
                                 // move the backup so it's ready for symlink process
                                 pathFileInfo.MoveTo(symFileInfo.FullName);
                                 LogManager.LogInformation("Moving file {0} to {1}", pathFileInfo.FullName, symFileInfo.FullName);
                             }
-                            else
-                            {
-                                // delete the outdated existing file
-                                pathFileInfo.Delete();
-                                LogManager.LogInformation("Deleting file {0} as we've got more recent backup", pathFileInfo.FullName);
-                            }
+                        }
+                        else if (symFileInfo.Exists)
+                        {
+                            // do nothing
                         }
                         else
                         {
-                            // move the backup so it's ready for symlink process
-                            pathFileInfo.MoveTo(symFileInfo.FullName);
-                            LogManager.LogInformation("Moving file {0} to {1}", pathFileInfo.FullName, symFileInfo.FullName);
-                        }
-                    }
-                    else if (symFileInfo.Exists)
-                    {
-                        // do nothing
-                    }
-                    else
-                    {
-                        // broken symlink
-                        status = GameSettingsCode.InvalidSymlink;
-                        this.game.EnqueueDelete(this); // do it here ?
-
-                        LogManager.LogInformation("Deleting broken symlink {0}", this.fileName);
-                        return;
-                    }
-
-                    break;
-
-                case SymbolicLinkType.TopDirectoryOnly:
-
-                    // existing directory is a symbolic link already
-                    if (pathDirectoryInfo.Exists && pathDirectoryInfo.IsSymbolicLink())
-                    {
-                        // target is present, all good!
-                        if (symDirectoryInfo.Exists)
-                            status = GameSettingsCode.ValidSymlink;
-                        else
-                        {
-                            // symbolic target is missing
+                            // broken symlink
                             status = GameSettingsCode.InvalidSymlink;
-
-                            pathDirectoryInfo.Delete(true);
-                            LogManager.LogInformation("Deleting broken symbolic link {0}", pathDirectoryInfo.FullName);
-
                             this.game.EnqueueDelete(this); // do it here ?
+
+                            LogManager.LogInformation("Deleting broken symlink {0}", this.fileName);
                             return;
                         }
                     }
-                    // existing directory is not a symbolic link
-                    else if (pathDirectoryInfo.Exists)
-                    {
-                        // we already have a backup, keep the most recent one?
-                        if (symDirectoryInfo.Exists)
-                        {
-                            // delete the outdated backup
-                            if (pathFileInfo.LastWriteTime > symDirectoryInfo.LastWriteTime)
-                            {
-                                symDirectoryInfo.Delete(true);
-                                LogManager.LogInformation("Deleting outdated backup path {0}", symDirectoryInfo.FullName);
+                    break;
 
+                case SymbolicLinkType.TopDirectoryOnly:
+                    {
+                        // existing directory is a symbolic link already
+                        if (pathDirectoryInfo.Exists && pathDirectoryInfo.IsSymbolicLink())
+                        {
+                            // target is present, all good!
+                            if (symDirectoryInfo.Exists)
+                                status = GameSettingsCode.ValidSymlink;
+                            else
+                            {
+                                // symbolic target is missing
+                                status = GameSettingsCode.InvalidSymlink;
+
+                                pathDirectoryInfo.Delete(true);
+                                LogManager.LogInformation("Deleting broken symbolic link {0}", pathDirectoryInfo.FullName);
+
+                                this.game.EnqueueDelete(this); // do it here ?
+                                return;
+                            }
+                        }
+                        // existing directory is not a symbolic link
+                        else if (pathDirectoryInfo.Exists)
+                        {
+                            // we already have a backup, keep the most recent one?
+                            if (symDirectoryInfo.Exists)
+                            {
+                                // delete the outdated backup
+                                if (pathFileInfo.LastWriteTime > symDirectoryInfo.LastWriteTime)
+                                {
+                                    symDirectoryInfo.Delete(true);
+                                    LogManager.LogInformation("Deleting outdated backup path {0}", symDirectoryInfo.FullName);
+
+                                    // move the backup so it's ready for symlink process
+                                    pathDirectoryInfo.MoveTo(symDirectoryInfo.FullName);
+                                    LogManager.LogInformation("Moving path {0} to {1}", pathDirectoryInfo.FullName, symDirectoryInfo.FullName);
+                                }
+                                else
+                                {
+                                    // delete the outdated existing directory
+                                    pathDirectoryInfo.Delete(true);
+                                    LogManager.LogInformation("Deleting path {0} as we've got more recent backup", pathDirectoryInfo.FullName);
+                                }
+                            }
+                            else
+                            {
                                 // move the backup so it's ready for symlink process
                                 pathDirectoryInfo.MoveTo(symDirectoryInfo.FullName);
                                 LogManager.LogInformation("Moving path {0} to {1}", pathDirectoryInfo.FullName, symDirectoryInfo.FullName);
                             }
-                            else
-                            {
-                                // delete the outdated existing directory
-                                pathDirectoryInfo.Delete(true);
-                                LogManager.LogInformation("Deleting path {0} as we've got more recent backup", pathDirectoryInfo.FullName);
-                            }
+                        }
+                        else if (symDirectoryInfo.Exists)
+                        {
+                            // do nothing
                         }
                         else
                         {
-                            // move the backup so it's ready for symlink process
-                            pathDirectoryInfo.MoveTo(symDirectoryInfo.FullName);
-                            LogManager.LogInformation("Moving path {0} to {1}", pathDirectoryInfo.FullName, symDirectoryInfo.FullName);
+                            // broken symlink
+                            status = GameSettingsCode.InvalidSymlink;
+                            this.game.EnqueueDelete(this); // do it here ?
+
+                            LogManager.LogInformation("Deleting broken symlink {0}", this.fileName);
+                            return;
                         }
-                    }
-                    else if (symDirectoryInfo.Exists)
-                    {
-                        // do nothing
-                    }
-                    else
-                    {
-                        // broken symlink
-                        status = GameSettingsCode.InvalidSymlink;
-                        this.game.EnqueueDelete(this); // do it here ?
 
-                        LogManager.LogInformation("Deleting broken symlink {0}", this.fileName);
-                        return;
+                        // we're good to go ?
+                        this.SetSymlink();
                     }
-
                     break;
 
                 case SymbolicLinkType.AllDirectories:
-
-                    if (!pathDirectoryInfo.Exists && !symDirectoryInfo.Exists)
                     {
-                        // broken symlink
-                        status = GameSettingsCode.InvalidSymlink;
-                        this.game.EnqueueDelete(this); // do it here ?
-                        return;
+                        if (!pathDirectoryInfo.Exists && !symDirectoryInfo.Exists)
+                        {
+                            // broken symlink
+                            status = GameSettingsCode.InvalidSymlink;
+                            this.game.EnqueueDelete(this); // do it here ?
+                            return;
+                        }
+
+                        if (!pathDirectoryInfo.Exists)
+                            pathDirectoryInfo.Create();
+
+                        if (!symDirectoryInfo.Exists)
+                            symDirectoryInfo.Create();
+
+                        string[] fileEntries = Directory.GetDirectories(loc_path, "*.*", SearchOption.TopDirectoryOnly);
+                        foreach (string fileName in fileEntries)
+                            ProcessPath(fileName, this);
+
+                        fileEntries = Directory.GetFiles(loc_path, "*.*", SearchOption.TopDirectoryOnly);
+                        foreach (string fileName in fileEntries)
+                            ProcessPath(fileName, this);
+
+                        fileEntries = Directory.GetDirectories(loc_symlink, "*.*", SearchOption.TopDirectoryOnly);
+                        foreach (string fileName in fileEntries)
+                            ProcessSymlink(fileName, this);
+
+                        fileEntries = Directory.GetFiles(loc_symlink, "*.*", SearchOption.TopDirectoryOnly);
+                        foreach (string fileName in fileEntries)
+                            ProcessSymlink(fileName, this);
+
+                        pathWatcher = new FileSystemWatcher()
+                        {
+                            Path = loc_path,
+                            EnableRaisingEvents = true,
+                            IncludeSubdirectories = false
+                        };
+                        pathWatcher.Created += PathCreated;
+                        pathWatcher.Deleted += PathDeleted;
+
+                        // not fan of the below
+                        status = GameSettingsCode.ValidSymlink;
                     }
-
-                    if (!pathDirectoryInfo.Exists)
-                        pathDirectoryInfo.Create();
-
-                    if (!symDirectoryInfo.Exists)
-                        symDirectoryInfo.Create();
-
-                    string[] fileEntries = Directory.GetDirectories(loc_path, "*.*", SearchOption.TopDirectoryOnly);
-                    foreach (string fileName in fileEntries)
-                        ProcessPath(fileName, this);
-
-                    fileEntries = Directory.GetFiles(loc_path, "*.*", SearchOption.TopDirectoryOnly);
-                    foreach (string fileName in fileEntries)
-                        ProcessPath(fileName, this);
-
-                    fileEntries = Directory.GetDirectories(loc_symlink, "*.*", SearchOption.TopDirectoryOnly);
-                    foreach (string fileName in fileEntries)
-                        ProcessSymlink(fileName, this);
-
-                    fileEntries = Directory.GetFiles(loc_symlink, "*.*", SearchOption.TopDirectoryOnly);
-                    foreach (string fileName in fileEntries)
-                        ProcessSymlink(fileName, this);
-
-                    pathWatcher = new FileSystemWatcher()
-                    {
-                        Path = loc_path,
-                        EnableRaisingEvents = true,
-                        IncludeSubdirectories = false
-                    };
-                    pathWatcher.Created += PathCreated;
-                    pathWatcher.Deleted += PathDeleted;
-
-                    // not fan of the below
-                    status = GameSettingsCode.ValidSymlink;
-
                     break;
             }
         }
