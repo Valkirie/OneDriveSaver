@@ -202,15 +202,21 @@ namespace OneDriveSaver
                             // we already have a backup, keep the most recent one?
                             if (symDirectoryInfo.Exists)
                             {
-                                // delete the outdated backup
+                                // exitsting directory is newer than backup
                                 if (pathFileInfo.LastWriteTime > symDirectoryInfo.LastWriteTime)
                                 {
+                                    // create directory backup
+                                    pathDirectoryInfo.MoveTo(Path.Combine(pathDirectoryInfo.FullName, "-old"));
+
+                                    /*
+                                    // delete the outdated backup
                                     symDirectoryInfo.Delete(true);
                                     LogManager.LogInformation("Deleting outdated backup path {0}", symDirectoryInfo.FullName);
 
-                                    // move the backup so it's ready for symlink process
+                                    // move the directory so it's ready for symlink process
                                     pathDirectoryInfo.MoveTo(symDirectoryInfo.FullName);
                                     LogManager.LogInformation("Moving path {0} to {1}", pathDirectoryInfo.FullName, symDirectoryInfo.FullName);
+                                    */
                                 }
                                 else
                                 {
