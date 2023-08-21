@@ -206,7 +206,7 @@ namespace OneDriveSaver
                                 if (pathFileInfo.LastWriteTime > symDirectoryInfo.LastWriteTime)
                                 {
                                     // create directory backup
-                                    pathDirectoryInfo.MoveTo(Path.Combine(pathDirectoryInfo.FullName, "-old"));
+                                    pathDirectoryInfo.MoveTo($"{pathDirectoryInfo.FullName}-old");
 
                                     /*
                                     // delete the outdated backup
