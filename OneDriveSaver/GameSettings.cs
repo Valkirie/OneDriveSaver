@@ -123,7 +123,7 @@ namespace OneDriveSaver
                 case SymbolicLinkType.File:
                     {
                         // existing file is a symbolic link already
-                        if (pathFileInfo.Exists && pathFileInfo.IsSymbolicLink())
+                        if (pathFileInfo.IsSymbolicLink())
                         {
                             // target is present, all good!
                             if (pathFileInfo.IsSymbolicLinkValid())
@@ -189,11 +189,14 @@ namespace OneDriveSaver
                 case SymbolicLinkType.TopDirectoryOnly:
                     {
                         // existing directory is a symbolic link already
-                        if (pathDirectoryInfo.Exists && pathDirectoryInfo.IsSymbolicLink())
+                        if (pathDirectoryInfo.IsSymbolicLink())
                         {
                             // target is present, all good!
                             if (symDirectoryInfo.Exists)
+                            {
                                 status = GameSettingsCode.ValidSymlink;
+                                return;
+                            }
                             else
                             {
                                 // symbolic target is missing
