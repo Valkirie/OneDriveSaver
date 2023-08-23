@@ -123,7 +123,7 @@ namespace OneDriveSaver
                 case SymbolicLinkType.File:
                     {
                         // existing file is a symbolic link already
-                        if (pathFileInfo.IsSymbolicLink())
+                        if (pathFileInfo.Exists && pathFileInfo.IsSymbolicLink())
                         {
                             // target is present, all good!
                             if (pathFileInfo.IsSymbolicLinkValid())
