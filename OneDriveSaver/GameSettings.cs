@@ -80,12 +80,22 @@ namespace OneDriveSaver
 
         public bool SetSymlink()
         {
-            try
+            DirectoryInfo directoryInfo = Directory.GetParent(this.loc_path.TrimEnd('\\'));
+            if (!Directory.Exists(directoryInfo.FullName))
+                Directory.CreateDirectory(directoryInfo.FullName);
+
+            FileSystemInfo info;
+            switch (type)
             {
-                return CreateSymbolicLink(loc_path, loc_symlink, type);
+                default:
+                case SymbolicLinkType.File:
+                    info = File.CreateSymbolicLink(this.loc_path, this.loc_symlink);
+                    break;
+                case SymbolicLinkType.TopDirectoryOnly:
+                    info = Directory.CreateSymbolicLink(this.loc_path, this.loc_symlink);
+                    break;
             }
-            catch (Exception)
-            { }
+
             return false;
         }
 
@@ -205,8 +215,16 @@ namespace OneDriveSaver
                                 // exitsting directory is newer than backup
                                 if (pathFileInfo.LastWriteTime > symDirectoryInfo.LastWriteTime)
                                 {
+                                    // Get the folder name and the parent directory
+                                    string folderName = Path.GetFileName(pathDirectoryInfo.FullName);
+                                    string parentDirectory = Path.GetDirectoryName(pathDirectoryInfo.FullName);
+
+                                    // Concatenate "-old" to the folder name
+                                    string newFolderName = folderName + "-old";
+
+                                    // Return the new folder path
                                     // create directory backup
-                                    pathDirectoryInfo.MoveTo($"{pathDirectoryInfo.FullName}-old");
+                                    pathDirectoryInfo.MoveTo(Path.Combine(parentDirectory, newFolderName));
 
                                     /*
                                     // delete the outdated backup
