@@ -189,7 +189,7 @@ namespace OneDriveSaver
                 case SymbolicLinkType.TopDirectoryOnly:
                     {
                         // existing directory is a symbolic link already
-                        if (pathDirectoryInfo.IsSymbolicLink())
+                        if (pathDirectoryInfo.Exists && pathDirectoryInfo.IsSymbolicLink())
                         {
                             // target is present, all good!
                             if (symDirectoryInfo.Exists)
