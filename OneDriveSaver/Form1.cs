@@ -46,7 +46,9 @@ namespace OneDriveSaver
                     foreach(IntPtr WindowHandle in processWindows)
                     {
                         string WindowTitle = WindowHelper.GetWindowTitle(WindowHandle);
-                        if (WindowTitle.Equals("Microsoft OneDrive", StringComparison.InvariantCultureIgnoreCase) || processes.Count() == 1)
+                        if (WindowTitle.Equals("Microsoft OneDrive", StringComparison.InvariantCultureIgnoreCase) ||
+                            WindowTitle.Equals("OneDrive - Personal", StringComparison.InvariantCultureIgnoreCase) ||
+                            processes.Count() == 1)
                         {
                             // store handle
                             OneDriveWindowHandle = WindowHandle;
